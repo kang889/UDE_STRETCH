@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-card">
+    <p class="tagline">QR Movement Break Prototype</p>
+
+    <h1>Stretch Break Challenge</h1>
+
+    <p class="intro-text">
+        Take a short movement break, complete a stretch, and earn points.
+    </p>
+
+    <div class="points-box">
+        <span>Total Points</span>
+        <strong>{{ total_points }}</strong>
+    </div>
+</section>
+
+<section class="section-header">
+    <h2>Choose a Stretch</h2>
+    <p>Each stretch takes less than a minute.</p>
+</section>
+
+<section class="stretch-grid">
+    {% for stretch in stretches %}
+    <article class="stretch-card">
+        <h3>{{ stretch.name }}</h3>
+
+        <p>{{ stretch.description }}</p>
+
+        <div class="stretch-meta">
+            <span>{{ stretch.duration }} seconds</span>
+            <span>{{ stretch.points }} points</span>
+        </div>
+
+        {% if stretch.id in completed_stretches %}
+        <p class="completed-label">Completed</p>
+        {% else %}
+        <a class="primary-button" href="{{ url_for('stretch_page', stretch_id=stretch.id) }}">
+            Start Stretch
+        </a>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
+
+<section class="bottom-actions">
+    <a class="secondary-button" href="{{ url_for('leaderboard_page') }}">
+        View Leaderboard
+    </a>
+
+    <a class="text-link" href="{{ url_for('reset_progress') }}">
+        Reset Progress
+    </a>
+</section>
+
+{% endblock %}

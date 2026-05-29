@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-card">
+    <p class="tagline">Camera Stretch Check</p>
+
+    <h1>{{ stretch.name }}</h1>
+
+    <p class="intro-text">
+        {{ stretch.description }}
+    </p>
+
+    <div class="points-box">
+        <span>Reward</span>
+        <strong>{{ stretch.points }} pts</strong>
+    </div>
+</section>
+
+<section class="content-card">
+    <h2>Instructions</h2>
+
+    <ol class="instruction-list">
+        {% for step in stretch.instructions %}
+        <li>{{ step }}</li>
+        {% endfor %}
+    </ol>
+</section>
+
+<section class="camera-card">
+    <h2>Camera Check</h2>
+
+    <p class="small-note">
+        Allow camera access, then perform the stretch slowly and safely.
+    </p>
+
+    <div class="camera-frame">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="pose-canvas"></canvas>
+    </div>
+
+    <p id="pose-status" class="pose-status">
+        Camera not started.
+    </p>
+
+    {% if stretch.sides %}
+    <div class="side-progress-list">
+        <div class="side-progress-item">
+            <div class="side-progress-label">
+                <span>{{ stretch.sides[0] }}</span>
+                <strong id="left-progress-text">0%</strong>
+            </div>
+    
+            <div class="progress-shell">
+                <div id="left-progress" class="progress-fill"></div>
+            </div>
+        </div>
+    
+        <div class="side-progress-item">
+            <div class="side-progress-label">
+                <span>{{ stretch.sides[1] }}</span>
+                <strong id="right-progress-text">0%</strong>
+            </div>
+    
+            <div class="progress-shell">
+                <div id="right-progress" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="side-progress-item">
+        <div class="side-progress-label">
+            <span>Movement check</span>
+            <strong id="single-progress-text">0%</strong>
+        </div>
+    
+        <div class="progress-shell">
+            <div id="single-progress" class="progress-fill"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <button class="primary-button" id="start-camera-button" data-stretch-id="{{ stretch.id }}">
+        Start Camera Check
+    </button>
+
+    <a class="primary-button disabled-link" id="complete-button"
+        href="{{ url_for('complete_stretch', stretch_id=stretch.id) }}">
+        Complete Stretch
+    </a>
+</section>
+
+<section class="content-card">
+    <h2>Completion Conditions</h2>
+
+    <ul class="condition-list">
+        {% for condition in stretch.correct_conditions %}
+        <li>{{ condition }}</li>
+        {% endfor %}
+    </ul>
+</section>
+
+<section class="bottom-actions">
+    <a class="secondary-button" href="{{ url_for('home') }}">
+        Back to Home
+    </a>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='pose_check.js') }}"></script>
+{% endblock %}

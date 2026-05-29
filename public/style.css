@@ -1,0 +1,346 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-main: #f7f3ea;
+    --bg-card: #fffaf1;
+    --bg-soft: #f0e7d8;
+    --text-main: #1f2933;
+    --text-muted: #6b7280;
+    --accent: #2f6f5e;
+    --accent-dark: #24584a;
+    --success: #2f855a;
+    --border-soft: rgba(31, 41, 51, 0.08);
+    --shadow-soft: 0 18px 45px rgba(31, 41, 51, 0.08);
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(47, 111, 94, 0.16), transparent 32%),
+        linear-gradient(180deg, #fbf7ef 0%, #f4efe6 100%);
+    color: var(--text-main);
+}
+
+.app-container {
+    width: 100%;
+    max-width: 460px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 22px 18px 36px;
+}
+
+.hero-card,
+.content-card,
+.camera-card,
+.timer-card,
+.stretch-card {
+    background: rgba(255, 250, 241, 0.92);
+    border: 1px solid var(--border-soft);
+    border-radius: 28px;
+    padding: 22px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(10px);
+}
+
+.hero-card {
+    padding: 28px 22px;
+}
+
+.success-card {
+    text-align: center;
+}
+
+.tagline {
+    display: inline-flex;
+    width: fit-content;
+    margin: 0 0 12px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: rgba(47, 111, 94, 0.12);
+    color: var(--accent-dark);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+h1,
+h2,
+h3,
+p {
+    margin-top: 0;
+}
+
+h1 {
+    font-size: 2.15rem;
+    line-height: 1.05;
+    margin-bottom: 12px;
+    letter-spacing: -0.04em;
+}
+
+h2 {
+    font-size: 1.18rem;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+}
+
+h3 {
+    font-size: 1.08rem;
+    margin-bottom: 8px;
+}
+
+.intro-text {
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 0;
+}
+
+.points-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-soft);
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin-top: 16px;
+}
+
+.points-box span {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+}
+
+.points-box strong {
+    font-size: 1.1rem;
+}
+
+.section-header {
+    margin: 24px 2px 14px;
+}
+
+.section-header p {
+    margin: -4px 0 0;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.stretch-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.stretch-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.stretch-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 50px rgba(31, 41, 51, 0.1);
+}
+
+.stretch-card p {
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.stretch-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 16px 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.stretch-meta span {
+    background: rgba(47, 111, 94, 0.1);
+    color: var(--accent-dark);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-weight: 700;
+}
+
+.primary-button,
+.secondary-button {
+    display: inline-flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 16px;
+    padding: 13px 16px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-button {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.secondary-button {
+    background: var(--bg-soft);
+    color: var(--text-main);
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.disabled-link {
+    pointer-events: none;
+    opacity: 0.42;
+    margin-top: 10px;
+}
+
+.completed-label {
+    margin-bottom: 0;
+    background: rgba(47, 133, 90, 0.12);
+    color: var(--success);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 800;
+}
+
+.instruction-list,
+.condition-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+    color: var(--text-muted);
+    line-height: 1.65;
+}
+
+.bottom-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.text-link {
+    display: block;
+    text-align: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.94rem;
+    padding: 8px;
+}
+
+.small-note {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.camera-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 22px;
+    background: #111827;
+    margin: 16px 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+#webcam {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+}
+
+/* Hide MediaPipe landmark drawing from users. */
+#pose-canvas {
+    display: none;
+}
+
+.pose-status {
+    min-height: 56px;
+    background: var(--bg-soft);
+    border-radius: 18px;
+    padding: 14px;
+    color: var(--text-main);
+    line-height: 1.45;
+    font-weight: 700;
+}
+
+.progress-shell {
+    width: 100%;
+    height: 12px;
+    background: #ded6c9;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 14px 0 16px;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.2s ease;
+}
+
+.leaderboard-list {
+    display: grid;
+    gap: 10px;
+}
+
+.leaderboard-row {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-soft);
+    border-radius: 16px;
+    padding: 14px;
+}
+
+.current-user {
+    background: rgba(47, 111, 94, 0.14);
+    color: var(--accent-dark);
+    font-weight: 800;
+}
+
+.side-progress-list {
+    display: grid;
+    gap: 14px;
+    margin: 14px 0 18px;
+}
+
+.side-progress-item {
+    display: grid;
+    gap: 8px;
+}
+
+.side-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-main);
+    font-size: 0.92rem;
+}
+
+.side-progress-label strong {
+    color: var(--accent-dark);
+}

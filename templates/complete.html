@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-card success-card">
+    <p class="tagline">Stretch Completed</p>
+
+    <h1>Good job!</h1>
+
+    <p class="intro-text">
+        {{ message }}
+    </p>
+
+    <div class="points-box">
+        <span>Points Earned</span>
+        <strong>+{{ points_earned }}</strong>
+    </div>
+
+    <div class="points-box">
+        <span>Total Points</span>
+        <strong>{{ total_points }}</strong>
+    </div>
+</section>
+
+<section class="content-card">
+    <h2>Why this helps</h2>
+
+    <p>
+        Short movement breaks can help users reduce long sitting periods
+        and build healthier daily habits.
+    </p>
+</section>
+
+<section class="bottom-actions">
+    <a class="primary-button" href="{{ url_for('home') }}">
+        Do Another Stretch
+    </a>
+
+    <a class="secondary-button" href="{{ url_for('leaderboard_page') }}">
+        View Leaderboard
+    </a>
+</section>
+
+{% endblock %}
