@@ -50,18 +50,18 @@
                 <span>{{ stretch.sides[0] }}</span>
                 <strong id="left-progress-text">0%</strong>
             </div>
-    
+
             <div class="progress-shell">
                 <div id="left-progress" class="progress-fill"></div>
             </div>
         </div>
-    
+
         <div class="side-progress-item">
             <div class="side-progress-label">
                 <span>{{ stretch.sides[1] }}</span>
                 <strong id="right-progress-text">0%</strong>
             </div>
-    
+
             <div class="progress-shell">
                 <div id="right-progress" class="progress-fill"></div>
             </div>
@@ -73,7 +73,7 @@
             <span>Movement check</span>
             <strong id="single-progress-text">0%</strong>
         </div>
-    
+
         <div class="progress-shell">
             <div id="single-progress" class="progress-fill"></div>
         </div>
@@ -109,5 +109,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{{ url_for('static', filename='pose_check.js') }}"></script>
+<script type="module" src="/pose_check.js"></script>
 {% endblock %}

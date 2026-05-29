@@ -6,7 +6,7 @@ from utils.scoring import calculate_points, calculate_total_points
 from utils.stretch_rules import can_complete_stretch, get_completion_message
 
 
-app = Flask(__name__, static_folder="public", static_url_path="/public")
+app = Flask(__name__, static_folder="public", static_url_path="")
 
 # Needed for Flask session storage.
 app.secret_key = "ude-stretch-prototype-secret"
