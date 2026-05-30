@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-card">
+
+    <h1>Login</h1>
+
+    <p class="intro-text">
+        Login to start your stretch challenge.
+    </p>
+
+    {% if error %}
+    <p style="
+        color: #ff4d4d;
+        background-color: rgba(255,0,0,0.08);
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: bold;
+        margin-top: 16px;
+    ">
+        {{ error }}
+    </p>
+    {% endif %}
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            required
+        >
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+        >
+
+        <button
+            class="primary-button"
+            type="submit"
+            style="
+                width: 60%;
+                margin: 18px auto 0;
+                display: block;
+            "
+        >
+            Login
+        </button>
+
+    </form>
+
+    <hr style="margin: 30px 0;">
+
+    <p
+        class="small-note"
+        style="
+            text-align:center;
+            margin-top: 10px;
+        "
+    >
+        Don’t have an account?
+
+        <a
+            href="/register"
+            style="
+                color: #2563eb;
+                text-decoration: underline;
+                font-weight: 600;
+                margin-left: 4px;
+            "
+        >
+    Create Account
+</a>
+    </p>
+
+</section>
+
+{% endblock %}
+```

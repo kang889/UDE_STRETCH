@@ -1,9 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, session
+from flask import Flask, render_template, redirect, url_for, session, request
 
 from data.stretches import get_all_stretches, get_stretch_by_id
 from data.leaderboard import get_mock_leaderboard, get_reward_badge
 from utils.scoring import calculate_points, calculate_total_points
 from utils.stretch_rules import can_complete_stretch, get_completion_message
+from utils.auth import register_user, validate_login
 
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -14,6 +15,8 @@ app.secret_key = "ude-stretch-prototype-secret"
 
 @app.route("/")
 def home():
+    if "username" not in session:
+        return redirect(url_for("login"))
     """
     Show homepage with all stretch options.
     """
@@ -21,17 +24,71 @@ def home():
     completed_stretches = session.get("completed_stretches", [])
 
     total_points = calculate_total_points(completed_stretches, stretches)
+    username = session.get("username", "Guest")
 
     return render_template(
         "index.html",
         stretches=stretches,
         completed_stretches=completed_stretches,
         total_points=total_points,
+        username=username,
     )
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if validate_login(username, password):
+
+            session["username"] = username
+
+            return redirect(url_for("home"))
+
+        return render_template(
+            "login.html",
+            error="Incorrect login details."
+        )
+
+    return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+
+        username = request.form["username"]
+        password = request.form["password"]
+
+        success = register_user(username, password)
+
+        if success:
+            return render_template(
+                "register_success.html"
+            )
+
+        return render_template(
+            "register.html",
+            error="Username already exists."
+        )
+
+    return render_template("register.html")
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(url_for("login"))
 
 
 @app.route("/stretch/<stretch_id>")
 def stretch_page(stretch_id):
+    if "username" not in session:
+        return redirect(url_for("login"))
     """
     Show selected stretch instructions.
     """
