@@ -1,5 +1,6 @@
-username,password
-admin,1234
-test,test123
-qqq,qqq
-123,123
+username,password,points,currency
+admin,1234,60,35
+test,test123,20,10
+qqq,qqq,30,20
+123,123,40,30
+test1,test1,0,0

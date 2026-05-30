@@ -1,10 +1,10 @@
 from flask import Flask, render_template, redirect, url_for, session, request
 
 from data.stretches import get_all_stretches, get_stretch_by_id
-from data.leaderboard import get_mock_leaderboard, get_reward_badge
-from utils.scoring import calculate_points, calculate_total_points
+from data.leaderboard import get_reward_badge
+from utils.scoring import calculate_points
 from utils.stretch_rules import can_complete_stretch, get_completion_message
-from utils.auth import register_user, validate_login
+from utils.auth import register_user, validate_login, update_user_points, get_user_data, get_all_users, add_friend, get_friends, get_friend_leaderboard, remove_friend
 
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -15,24 +15,29 @@ app.secret_key = "ude-stretch-prototype-secret"
 
 @app.route("/")
 def home():
+
     if "username" not in session:
         return redirect(url_for("login"))
-    """
-    Show homepage with all stretch options.
-    """
-    stretches = get_all_stretches()
-    completed_stretches = session.get("completed_stretches", [])
 
-    total_points = calculate_total_points(completed_stretches, stretches)
-    username = session.get("username", "Guest")
+    username = session.get("username")
+    stretches = get_all_stretches()
+    user_data = get_user_data(username)
+    total_points = user_data["points"]
+    currency = user_data["currency"]
+    completed_stretches = session.get(
+        "completed_stretches",
+        []
+    )
 
     return render_template(
         "index.html",
         stretches=stretches,
         completed_stretches=completed_stretches,
         total_points=total_points,
+        currency=currency,
         username=username,
     )
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -117,9 +122,16 @@ def complete_stretch(stretch_id):
 
     session["completed_stretches"] = completed_stretches
 
-    all_stretches = get_all_stretches()
-    total_points = calculate_total_points(completed_stretches, all_stretches)
+
     points_earned = calculate_points(stretch)
+    username = session.get("username")
+    update_user_points(
+        username,
+        points_earned
+    )
+    user_data = get_user_data(username)
+    total_points = user_data["points"]
+
     message = get_completion_message(stretch)
 
     return render_template(
@@ -133,15 +145,19 @@ def complete_stretch(stretch_id):
 
 @app.route("/leaderboard")
 def leaderboard_page():
-    """
-    Show leaderboard and reward badge.
-    """
-    stretches = get_all_stretches()
-    completed_stretches = session.get("completed_stretches", [])
+    users = get_all_users()
+    leaderboard = sorted(
+        users,
+        key=lambda user: int(user["points"]),
+        reverse=True
+    )
 
-    total_points = calculate_total_points(completed_stretches, stretches)
-    leaderboard = get_mock_leaderboard(total_points)
-    reward_badge = get_reward_badge(total_points)
+    username = session.get("username")
+    user_data = get_user_data(username)
+    total_points = user_data["points"]
+    reward_badge = get_reward_badge(
+        int(total_points)
+    )
 
     return render_template(
         "leaderboard.html",
@@ -151,14 +167,106 @@ def leaderboard_page():
     )
 
 
-@app.route("/reset")
-def reset_progress():
-    """
-    Clear prototype progress.
-    """
-    session.clear()
-    return redirect(url_for("home"))
+@app.route("/friend-leaderboard")
+def friend_leaderboard_page():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+
+    leaderboard = get_friend_leaderboard(
+        username
+    )
+
+    user_data = get_user_data(username)
+
+    total_points = user_data["points"]
+
+    reward_badge = get_reward_badge(
+        int(total_points)
+    )
+
+    return render_template(
+        "leaderboard.html",
+        leaderboard=leaderboard,
+        total_points=total_points,
+        reward_badge=reward_badge,
+    )
+
+
+@app.route("/rewards")
+def rewards_page():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+
+    user_data = get_user_data(username)
+
+    currency = user_data["currency"]
+
+    return render_template(
+        "rewards.html",
+        username=username,
+        currency=currency,
+    )
+
+@app.route("/friends", methods=["GET", "POST"])
+def friends_page():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+
+    error = None
+
+    if request.method == "POST":
+
+        friend_username = request.form["friend_username"]
+
+        success = add_friend(
+            username,
+            friend_username
+        )
+
+        if not success:
+
+            error = (
+                "Unable to add friend."
+            )
+
+    friends = get_friends(username)
+
+    return render_template(
+        "friends.html",
+        username=username,
+        friends=friends,
+        error=error,
+    )
+
+
+@app.route("/remove-friend/<friend>")
+def remove_friend_page(friend):
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+
+    remove_friend(
+        username,
+        friend
+    )
+
+    return redirect(
+        url_for("friends_page")
+    )
+
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+

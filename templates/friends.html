@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- HEADER -->
+
+<section class="hero-card">
+
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+    ">
+
+        <div>
+
+            <p style="
+                color:#9ca3af;
+                margin:0;
+            ">
+                Social Movement
+            </p>
+
+            <h1 style="
+                margin-top:6px;
+            ">
+                Friends 👥
+            </h1>
+
+        </div>
+
+        <a
+            href="{{ url_for('home') }}"
+            class="secondary-button"
+        >
+            Back
+        </a>
+
+    </div>
+
+    <p class="intro-text">
+        Add friends and compare movement progress together.
+    </p>
+
+</section>
+
+
+<!-- ADD FRIEND -->
+
+<section style="
+    margin-top:30px;
+">
+
+    <div class="stretch-card">
+
+        <h2>
+            Add Friend
+        </h2>
+
+        <form method="POST">
+
+            <input
+                type="text"
+                name="friend_username"
+                placeholder="Enter username"
+                required
+            >
+
+            <button
+                class="primary-button"
+                type="submit"
+            >
+                Add Friend
+            </button>
+
+        </form>
+
+        {% if error %}
+
+            <p style="
+                color:#ef4444;
+                margin-top:18px;
+                font-weight:600;
+            ">
+
+                {{ error }}
+
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+<!-- FRIEND LIST -->
+
+<section class="section-header" style="margin-top:50px;">
+
+    <h2>Your Friends</h2>
+
+    <p>
+        Friends added to your movement network.
+    </p>
+
+</section>
+
+
+<section class="stretch-grid">
+
+    {% if friends %}
+
+        {% for friend in friends %}
+
+        <article class="stretch-card">
+
+            <h3>
+                👤 {{ friend }}
+            </h3>
+
+            <p>
+                Connected in your wellness network.
+            </p>
+            
+            <a
+                href="{{ url_for('remove_friend_page', friend=friend) }}"
+                style="
+                    display:inline-block;
+                    margin-top:18px;
+                    color:#ef4444;
+                    text-decoration:none;
+                    font-weight:600;
+                "
+            >
+                Remove Friend
+            </a>
+
+        </article>
+
+        {% endfor %}
+
+    {% else %}
+
+        <article class="stretch-card">
+
+            <h3>
+                No Friends Yet
+            </h3>
+
+            <p>
+                Add your first friend to start comparing scores.
+            </p>
+
+        </article>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}
