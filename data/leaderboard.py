@@ -1,7 +1,7 @@
 """
 Leaderboard and reward system.
 
-This file is reserved for the leaderboard engineer.
+This file is reserved for the leaderboard.
 """
 
 
