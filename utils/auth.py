@@ -1,116 +1,120 @@
-import csv
-import os
-
-USERS_FILE = "data/users.csv"
-FRIENDS_FILE = "data/friends.csv"
+from utils.supabase_client import supabase
 
 
+# =========================
+# USER SYSTEM
+# =========================
 
 def register_user(username, password):
 
-    if user_exists(username):
+    existing = supabase.table("users") \
+        .select("*") \
+        .eq("username", username) \
+        .execute()
+
+    if existing.data:
         return False
 
-    file_exists = os.path.isfile(USERS_FILE)
+    supabase.table("users").insert({
 
-    with open(USERS_FILE, "a", newline="") as file:
-        writer = csv.writer(file)
+        "username": username,
+        "password": password,
+        "points": 0,
+        "currency": 0
 
-        if not file_exists:
-            writer.writerow([ "username", "password", "points", "currency" ])
-
-        writer.writerow([username, password, 0, 0])
+    }).execute()
 
     return True
 
 
 def user_exists(username):
 
-    if not os.path.isfile(USERS_FILE):
-        return False
+    response = supabase.table("users") \
+        .select("*") \
+        .eq("username", username) \
+        .execute()
 
-    with open(USERS_FILE, "r") as file:
-        reader = csv.DictReader(file)
-
-        for row in reader:
-            if row["username"] == username:
-                return True
-
-    return False
+    return len(response.data) > 0
 
 
 def validate_login(username, password):
 
-    if not os.path.isfile(USERS_FILE):
-        return False
+    response = supabase.table("users") \
+        .select("*") \
+        .eq("username", username) \
+        .eq("password", password) \
+        .execute()
 
-    with open(USERS_FILE, "r") as file:
-        reader = csv.DictReader(file)
+    return len(response.data) > 0
 
-        for row in reader:
-            if (
-                row["username"] == username and
-                row["password"] == password
-            ):
-                return True
 
-    return False
+# =========================
+# USER DATA
+# =========================
+
+def get_user_data(username):
+
+    response = supabase.table("users") \
+        .select("*") \
+        .eq("username", username) \
+        .execute()
+
+    if response.data:
+
+        return response.data[0]
+
+    return None
+
+
+def get_all_users():
+
+    response = supabase.table("users") \
+        .select("*") \
+        .execute()
+
+    return response.data
+
+
+# =========================
+# POINT SYSTEM
+# =========================
 
 def update_user_points(username, points_to_add):
 
-    rows = []
+    user = get_user_data(username)
 
-    with open(USERS_FILE, "r") as file:
+    current_points = int(
+        user["points"]
+    )
 
-        reader = csv.DictReader(file)
+    current_currency = int(
+        user["currency"]
+    )
 
-        for row in reader:
+    new_points = (
+        current_points
+        + points_to_add
+    )
 
-            if row["username"] == username:
+    new_currency = (
+        current_currency
+        + points_to_add
+    )
 
-                current_points = int(row["points"])
-                current_currency = int(row["currency"])
+    supabase.table("users") \
+        .update({
 
-                row["points"] = str(
-                    current_points + points_to_add
-                )
+            "points": new_points,
+            "currency": new_currency
 
-                row["currency"] = str(
-                    current_currency + points_to_add
-                )
+        }) \
+        .eq("username", username) \
+        .execute()
 
-            rows.append(row)
 
-    with open(USERS_FILE, "w", newline="") as file:
-
-        fieldnames = [
-            "username",
-            "password",
-            "points",
-            "currency"
-        ]
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
-
-        writer.writeheader()
-        writer.writerows(rows)
-
-def get_user_data(username):
-    with open(USERS_FILE, "r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row["username"] == username:
-                return row
-    return None
-
-def get_all_users():
-    with open(USERS_FILE, "r") as file:
-        reader = csv.DictReader(file)
-        return list(reader)
-    
+# =========================
+# FRIEND SYSTEM
+# =========================
 
 def add_friend(user, friend):
 
@@ -120,59 +124,72 @@ def add_friend(user, friend):
     if not user_exists(friend):
         return False
 
-    file_exists = os.path.isfile(FRIENDS_FILE)
+    existing = supabase.table("friends") \
+        .select("*") \
+        .eq("user", user) \
+        .eq("friend", friend) \
+        .execute()
 
-    existing_friends = get_friends(user)
-
-    if friend in existing_friends:
+    if existing.data:
         return False
 
-    with open(FRIENDS_FILE, "a", newline="") as file:
+    # USER -> FRIEND
 
-        writer = csv.writer(file)
+    supabase.table("friends").insert({
 
-        if not file_exists:
+        "user": user,
+        "friend": friend
 
-            writer.writerow([
-                "user",
-                "friend"
-            ])
+    }).execute()
 
-        # USER -> FRIEND
-        writer.writerow([
-            user,
-            friend
-        ])
+    # FRIEND -> USER
 
-        # FRIEND -> USER
-        writer.writerow([
-            friend,
-            user
-        ])
+    supabase.table("friends").insert({
+
+        "user": friend,
+        "friend": user
+
+    }).execute()
 
     return True
 
 
 def get_friends(user):
 
+    response = supabase.table("friends") \
+        .select("*") \
+        .eq("user", user) \
+        .execute()
+
     friends = []
 
-    if not os.path.isfile(FRIENDS_FILE):
-        return friends
+    for row in response.data:
 
-    with open(FRIENDS_FILE, "r") as file:
-
-        reader = csv.DictReader(file)
-
-        for row in reader:
-
-            if row["user"] == user:
-
-                friends.append(
-                    row["friend"]
-                )
+        friends.append(
+            row["friend"]
+        )
 
     return friends
+
+
+def remove_friend(user, friend):
+
+    supabase.table("friends") \
+        .delete() \
+        .eq("user", user) \
+        .eq("friend", friend) \
+        .execute()
+
+    supabase.table("friends") \
+        .delete() \
+        .eq("user", friend) \
+        .eq("friend", user) \
+        .execute()
+
+
+# =========================
+# FRIEND LEADERBOARD
+# =========================
 
 def get_friend_leaderboard(username):
 
@@ -192,45 +209,14 @@ def get_friend_leaderboard(username):
             friend_data.append(user)
 
     sorted_friends = sorted(
+
         friend_data,
-        key=lambda user: int(user["points"]),
+
+        key=lambda user: int(
+            user["points"]
+        ),
+
         reverse=True
     )
 
     return sorted_friends
-
-
-def remove_friend(user, friend):
-
-    rows = []
-
-    with open(FRIENDS_FILE, "r") as file:
-
-        reader = csv.DictReader(file)
-
-        for row in reader:
-
-            is_pair = (
-                row["user"] == user
-                and row["friend"] == friend
-            )
-
-            reverse_pair = (
-                row["user"] == friend
-                and row["friend"] == user
-            )
-
-            if not is_pair and not reverse_pair:
-
-                rows.append(row)
-
-    with open(FRIENDS_FILE, "w", newline="") as file:
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=["user", "friend"]
-        )
-
-        writer.writeheader()
-
-        writer.writerows(rows)
