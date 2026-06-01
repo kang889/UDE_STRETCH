@@ -104,31 +104,42 @@ def stretch_page(stretch_id):
 
     return render_template("stretch.html", stretch=stretch)
 
-
 @app.route("/complete/<stretch_id>")
 def complete_stretch(stretch_id):
     """
     Mark selected stretch as completed.
+    Award points only once per stretch per login session.
     """
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
     stretch = get_stretch_by_id(stretch_id)
 
     if not can_complete_stretch(stretch):
         return redirect(url_for("home"))
 
-    completed_stretches = session.get("completed_stretches", [])
+    username = session.get("username")
+
+    completed_stretches = session.get(
+        "completed_stretches",
+        []
+    )
+
+    points_earned = 0
 
     if stretch_id not in completed_stretches:
         completed_stretches.append(stretch_id)
 
+        points_earned = calculate_points(stretch)
+
+        update_user_points(
+            username,
+            points_earned
+        )
+
     session["completed_stretches"] = completed_stretches
 
-
-    points_earned = calculate_points(stretch)
-    username = session.get("username")
-    update_user_points(
-        username,
-        points_earned
-    )
     user_data = get_user_data(username)
     total_points = user_data["points"]
 
@@ -141,7 +152,6 @@ def complete_stretch(stretch_id):
         points_earned=points_earned,
         total_points=total_points,
     )
-
 
 @app.route("/leaderboard")
 def leaderboard_page():
