@@ -911,4 +911,161 @@ input:focus {
     }
 }
 
+/* ========================= */
+/* REDESIGNED EXERCISE PAGE */
+/* ========================= */
+
+.exercise-header-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 32px;
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.08);
+
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.exercise-reward-pill {
+    background: rgba(52, 211, 153, 0.14);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.24);
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.exercise-guide-card {
+    background: rgba(17, 24, 39, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 32px;
+    margin-top: 28px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.guide-media-frame {
+    width: 100%;
+    min-height: 280px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guide-media-frame img {
+    width: 100%;
+    height: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+}
+
+.guide-placeholder {
+    color: #9ca3af;
+    font-weight: 700;
+    text-align: center;
+    padding: 40px;
+}
+
+.exercise-layout {
+    display: grid;
+    grid-template-columns: 0.8fr 1.4fr;
+    gap: 28px;
+    margin-top: 28px;
+}
+
+.exercise-game-card {
+    margin-top: 0;
+}
+
+.game-view-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-top: 20px;
+}
+
+.game-panel {
+    min-width: 0;
+}
+
+.game-panel h3 {
+    margin-bottom: 14px;
+}
+
+.avatar-frame {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    border-radius: 24px;
+    overflow: hidden;
+
+    background:
+        radial-gradient(circle at center,
+            rgba(139, 92, 246, 0.18),
+            rgba(255, 255, 255, 0.03));
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#avatar-canvas {
+    width: 100%;
+    height: 500px;
+    display: block;
+}
+
+.avatar-status {
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #d1d5db;
+    font-weight: 700;
+}
+
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 900px) {
+
+    .exercise-header-card {
+        flex-direction: column;
+    }
+
+    .exercise-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .game-view-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .guide-media-frame {
+        min-height: 220px;
+    }
+
+    .avatar-frame {
+        min-height: 360px;
+    }
+
+    #avatar-canvas {
+        height: 360px;
+    }
+}
 
