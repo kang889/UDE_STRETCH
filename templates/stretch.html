@@ -2,95 +2,178 @@
 
 {% block content %}
 
-<section class="hero-card">
-    <p class="tagline">Camera Stretch Check</p>
+<section class="exercise-header-card">
 
-    <h1>{{ stretch.name }}</h1>
+    <div>
+        <p class="tagline">Guided Exercise Check</p>
 
-    <p class="intro-text">
-        {{ stretch.description }}
-    </p>
+        <h1>{{ stretch.name }}</h1>
 
-    <div class="points-box">
-        <span>Reward</span>
-        <strong>{{ stretch.points }} pts</strong>
-    </div>
-</section>
-
-<section class="content-card">
-    <h2>Instructions</h2>
-
-    <ol class="instruction-list">
-        {% for step in stretch.instructions %}
-        <li>{{ step }}</li>
-        {% endfor %}
-    </ol>
-</section>
-
-<section class="camera-card">
-    <h2>Camera Check</h2>
-
-    <p class="small-note">
-        Allow camera access, then perform the stretch slowly and safely.
-    </p>
-
-    <div class="camera-frame">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="pose-canvas"></canvas>
+        <p class="intro-text">
+            {{ stretch.description }}
+        </p>
     </div>
 
-    <p id="pose-status" class="pose-status">
-        Camera not started.
-    </p>
+    <div class="exercise-reward-pill">
+        +{{ stretch.points }} pts
+    </div>
 
-    {% if stretch.sides %}
-    <div class="side-progress-list">
+</section>
+
+
+<section class="exercise-guide-card">
+
+    <div class="section-title-row">
+        <div>
+            <h2>Watch the Guide</h2>
+
+            <p>
+                Follow the movement shown in the guide before starting the camera check.
+            </p>
+        </div>
+    </div>
+
+    <div class="guide-media-frame">
+        {% if stretch.guide_media %}
+        <img src="{{ stretch.guide_media }}" alt="{{ stretch.name }} guide">
+        {% else %}
+        <div class="guide-placeholder">
+            Guide GIF will be placed here.
+        </div>
+        {% endif %}
+    </div>
+
+</section>
+
+
+<section class="exercise-layout">
+
+    <section class="content-card">
+
+        <h2>Instructions</h2>
+
+        <ol class="instruction-list">
+            {% for step in stretch.instructions %}
+            <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+
+    </section>
+
+
+    <section class="camera-card exercise-game-card">
+
+        <div class="section-title-row">
+            <div>
+                <h2>Camera Game Check</h2>
+
+                <p class="small-note">
+                    Your avatar turns green when the movement is detected correctly.
+                </p>
+            </div>
+        </div>
+
+
+        <div class="game-view-grid">
+
+            <div class="game-panel">
+
+                <h3>Camera View</h3>
+
+                <div class="camera-frame">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="pose-canvas"></canvas>
+                </div>
+
+            </div>
+
+
+            <div class="game-panel">
+
+                <h3>Avatar View</h3>
+
+                <div class="avatar-frame">
+                    <canvas id="avatar-canvas"></canvas>
+                </div>
+
+                <p id="avatar-status" class="avatar-status">
+                    Avatar waiting for pose...
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <p id="pose-status" class="pose-status">
+            Camera not started.
+        </p>
+
+
+        {% if stretch.sides %}
+
+        <div class="side-progress-list">
+
+            <div class="side-progress-item">
+                <div class="side-progress-label">
+                    <span>{{ stretch.sides[0] }}</span>
+                    <strong id="left-progress-text">0%</strong>
+                </div>
+
+                <div class="progress-shell">
+                    <div id="left-progress" class="progress-fill"></div>
+                </div>
+            </div>
+
+
+            <div class="side-progress-item">
+                <div class="side-progress-label">
+                    <span>{{ stretch.sides[1] }}</span>
+                    <strong id="right-progress-text">0%</strong>
+                </div>
+
+                <div class="progress-shell">
+                    <div id="right-progress" class="progress-fill"></div>
+                </div>
+            </div>
+
+        </div>
+
+        {% else %}
+
         <div class="side-progress-item">
+
             <div class="side-progress-label">
-                <span>{{ stretch.sides[0] }}</span>
-                <strong id="left-progress-text">0%</strong>
+                <span>Exercise progress</span>
+                <strong id="single-progress-text">0%</strong>
             </div>
 
             <div class="progress-shell">
-                <div id="left-progress" class="progress-fill"></div>
-            </div>
-        </div>
-
-        <div class="side-progress-item">
-            <div class="side-progress-label">
-                <span>{{ stretch.sides[1] }}</span>
-                <strong id="right-progress-text">0%</strong>
+                <div id="single-progress" class="progress-fill"></div>
             </div>
 
-            <div class="progress-shell">
-                <div id="right-progress" class="progress-fill"></div>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="side-progress-item">
-        <div class="side-progress-label">
-            <span>Movement check</span>
-            <strong id="single-progress-text">0%</strong>
         </div>
 
-        <div class="progress-shell">
-            <div id="single-progress" class="progress-fill"></div>
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <button class="primary-button" id="start-camera-button" data-stretch-id="{{ stretch.id }}">
-        Start Camera Check
-    </button>
 
-    <a class="primary-button disabled-link" id="complete-button"
-        href="{{ url_for('complete_stretch', stretch_id=stretch.id) }}">
-        Complete Stretch
-    </a>
+        <button class="primary-button" id="start-camera-button" data-stretch-id="{{ stretch.id }}">
+            Start Camera Check
+        </button>
+
+
+        <a class="primary-button disabled-link" id="complete-button"
+            href="{{ url_for('complete_stretch', stretch_id=stretch.id) }}">
+            Complete Exercise
+        </a>
+
+    </section>
+
 </section>
 
+
 <section class="content-card">
+
     <h2>Completion Conditions</h2>
 
     <ul class="condition-list">
@@ -98,15 +181,20 @@
         <li>{{ condition }}</li>
         {% endfor %}
     </ul>
+
 </section>
 
+
 <section class="bottom-actions">
+
     <a class="secondary-button" href="{{ url_for('home') }}">
         Back to Home
     </a>
+
 </section>
 
 {% endblock %}
+
 
 {% block scripts %}
 <script type="module" src="/pose_check.js"></script>

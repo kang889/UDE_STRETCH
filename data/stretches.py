@@ -16,6 +16,7 @@ STRETCHES = [
         "target_label": "8 seconds each side",
         "points": 10,
         "sides": ["Left side", "Right side"],
+        "guide_media": "/guides/sidestretch.gif",
         "description": "Stretch your upper body gently to the left and right to reduce side-body stiffness.",
         "instructions": [
             "Stand or sit upright while facing the camera.",
@@ -39,6 +40,7 @@ STRETCHES = [
          "target_label": "8 calf raises each side",
          "points": 10,
          "sides": ["Left neck stretch", "Right neck stretch"],
+         "guide_media": "/guides/neck_calf.gif",
          "description": "Gently guide your neck to each side while completing calf raises.",
         "instructions": [
         "Stand facing the camera with your body visible.",
@@ -62,6 +64,7 @@ STRETCHES = [
         "duration": 10,
         "target_label": "10 reps",
         "points": 10,
+        "guide_media": "/guides/squat.gif",
         "description": "Face the camera and complete 10 controlled squats.",
         "instructions": [
             "Stand facing the camera with your full body visible.",

@@ -22,6 +22,13 @@ const leftProgressText = document.getElementById("left-progress-text");
 const rightProgressText = document.getElementById("right-progress-text");
 const singleProgressText = document.getElementById("single-progress-text");
 
+const avatarCanvas = document.getElementById("avatar-canvas");
+const avatarStatus = document.getElementById("avatar-status");
+
+const avatarContext = avatarCanvas
+    ? avatarCanvas.getContext("2d")
+    : null;
+
 const SIDE_BODY_HOLD_SECONDS = 8;
 const REQUIRED_REPS = 10;
 const NECK_CALF_RAISES_PER_SIDE = 8;
@@ -145,6 +152,13 @@ function predictWebcam() {
         );
 
         const checkResult = checkSelectedStretch(result);
+
+        const landmarks =
+            result.landmarks && result.landmarks.length > 0
+                ? result.landmarks[0]
+                : null;
+
+        drawAvatar(landmarks, checkResult.isCorrect);
 
         updateCompletionProgress(checkResult);
     }
@@ -559,4 +573,228 @@ function updateCompleteButton() {
     completeButton.classList.remove("disabled-link");
     completeButton.textContent = "Exercise Verified - Complete";
     statusText.textContent = "Exercise verified. You can complete it now.";
+}
+
+function resizeAvatarCanvas() {
+    /*
+    Match canvas drawing size to displayed size.
+    */
+    if (!avatarCanvas) {
+        return;
+    }
+
+    const displayWidth = avatarCanvas.clientWidth;
+    const displayHeight = avatarCanvas.clientHeight;
+
+    if (
+        avatarCanvas.width !== displayWidth ||
+        avatarCanvas.height !== displayHeight
+    ) {
+        avatarCanvas.width = displayWidth;
+        avatarCanvas.height = displayHeight;
+    }
+}
+
+
+function landmarkToCanvas(point) {
+    /*
+    Convert MediaPipe normalized position to canvas position.
+    */
+    return {
+        x: point.x * avatarCanvas.width,
+        y: point.y * avatarCanvas.height
+    };
+}
+
+
+function drawAvatar(landmarks, isCorrectPose) {
+    /*
+    Draw a simple 2D body avatar from MediaPipe landmarks.
+
+    Green = correct movement detected.
+    Grey = wrong pose or no pose.
+    */
+    if (!avatarCanvas || !avatarContext) {
+        return;
+    }
+
+    resizeAvatarCanvas();
+
+    avatarContext.clearRect(
+        0,
+        0,
+        avatarCanvas.width,
+        avatarCanvas.height
+    );
+
+    const avatarColor = isCorrectPose
+        ? "#34d399"
+        : "#6b7280";
+
+    const jointColor = isCorrectPose
+        ? "#bbf7d0"
+        : "#d1d5db";
+
+    if (!landmarks) {
+        drawEmptyAvatar(avatarColor);
+
+        if (avatarStatus) {
+            avatarStatus.textContent = "No pose detected.";
+        }
+
+        return;
+    }
+
+    const bodyConnections = [
+        [11, 12], // shoulders
+        [11, 13], // left upper arm
+        [13, 15], // left lower arm
+        [12, 14], // right upper arm
+        [14, 16], // right lower arm
+        [11, 23], // left torso
+        [12, 24], // right torso
+        [23, 24], // hips
+        [23, 25], // left upper leg
+        [25, 27], // left lower leg
+        [24, 26], // right upper leg
+        [26, 28]  // right lower leg
+    ];
+
+    avatarContext.lineWidth = 8;
+    avatarContext.lineCap = "round";
+    avatarContext.strokeStyle = avatarColor;
+
+    for (const connection of bodyConnections) {
+        const start = landmarks[connection[0]];
+        const end = landmarks[connection[1]];
+
+        if (!areVisible([start, end])) {
+            continue;
+        }
+
+        const startPoint = landmarkToCanvas(start);
+        const endPoint = landmarkToCanvas(end);
+
+        avatarContext.beginPath();
+        avatarContext.moveTo(startPoint.x, startPoint.y);
+        avatarContext.lineTo(endPoint.x, endPoint.y);
+        avatarContext.stroke();
+    }
+
+    drawAvatarHead(landmarks, avatarColor);
+    drawAvatarJoints(landmarks, jointColor);
+
+    if (avatarStatus) {
+        avatarStatus.textContent = isCorrectPose
+            ? "Correct movement detected."
+            : "Adjust your pose to match the exercise.";
+    }
+}
+
+
+function drawAvatarHead(landmarks, avatarColor) {
+    /*
+    Draw head using the nose landmark as a rough position.
+    */
+    const nose = landmarks[0];
+
+    if (!areVisible([nose])) {
+        return;
+    }
+
+    const nosePoint = landmarkToCanvas(nose);
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        nosePoint.x,
+        nosePoint.y,
+        18,
+        0,
+        Math.PI * 2
+    );
+
+    avatarContext.fillStyle = avatarColor;
+    avatarContext.fill();
+}
+
+
+function drawAvatarJoints(landmarks, jointColor) {
+    /*
+    Draw visible body joints.
+    */
+    const jointIndexes = [
+        11, 12,
+        13, 14,
+        15, 16,
+        23, 24,
+        25, 26,
+        27, 28
+    ];
+
+    avatarContext.fillStyle = jointColor;
+
+    for (const index of jointIndexes) {
+        const joint = landmarks[index];
+
+        if (!areVisible([joint])) {
+            continue;
+        }
+
+        const point = landmarkToCanvas(joint);
+
+        avatarContext.beginPath();
+        avatarContext.arc(
+            point.x,
+            point.y,
+            6,
+            0,
+            Math.PI * 2
+        );
+
+        avatarContext.fill();
+    }
+}
+
+
+function drawEmptyAvatar(avatarColor) {
+    /*
+    Draw a simple grey placeholder avatar when no pose is detected.
+    */
+    const centerX = avatarCanvas.width / 2;
+    const centerY = avatarCanvas.height / 2;
+
+    avatarContext.strokeStyle = avatarColor;
+    avatarContext.fillStyle = avatarColor;
+    avatarContext.lineWidth = 8;
+    avatarContext.lineCap = "round";
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        centerX,
+        centerY - 80,
+        20,
+        0,
+        Math.PI * 2
+    );
+    avatarContext.fill();
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(centerX, centerY - 55);
+    avatarContext.lineTo(centerX, centerY + 40);
+    avatarContext.stroke();
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(centerX - 55, centerY - 15);
+    avatarContext.lineTo(centerX + 55, centerY - 15);
+    avatarContext.stroke();
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(centerX, centerY + 40);
+    avatarContext.lineTo(centerX - 40, centerY + 100);
+    avatarContext.stroke();
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(centerX, centerY + 40);
+    avatarContext.lineTo(centerX + 40, centerY + 100);
+    avatarContext.stroke();
 }
