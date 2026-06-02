@@ -22,7 +22,28 @@ const leftProgressText = document.getElementById("left-progress-text");
 const rightProgressText = document.getElementById("right-progress-text");
 const singleProgressText = document.getElementById("single-progress-text");
 
-const REQUIRED_HOLD_SECONDS = 3;
+const SIDE_BODY_HOLD_SECONDS = 8;
+const REQUIRED_REPS = 10;
+const NECK_CALF_RAISES_PER_SIDE = 8;
+let neckCalfRaiseCount = {
+    left: 0,
+    right: 0
+};
+
+let neckCalfRaiseBaselineY = {
+    left: null,
+    right: null
+};
+
+let neckCalfRaiseState = {
+    left: "down",
+    right: "down"
+};
+
+let squatCount = 0;
+let squatBaselineHipY = null;
+let squatBaselineGap = null;
+let squatState = "up";
 
 let poseLandmarker = null;
 let webcamRunning = false;
@@ -41,19 +62,29 @@ let completedSide = {
     single: false
 };
 
+
+
 if (startButton) {
     selectedStretchId = startButton.dataset.stretchId;
 
     startButton.addEventListener("click", async function () {
-        startButton.disabled = true;
-        statusText.textContent = "Loading camera check...";
+        try {
+            startButton.disabled = true;
+            statusText.textContent = "Loading camera check...";
 
-        await setupPoseLandmarker();
-        await startWebcam();
+            await setupPoseLandmarker();
+            await startWebcam();
 
-        webcamRunning = true;
-        statusText.textContent = "Camera started. Perform the stretch.";
-        predictWebcam();
+            webcamRunning = true;
+            statusText.textContent = "Camera started. Perform the exercise.";
+            predictWebcam();
+        } catch (error) {
+            console.error(error);
+
+            startButton.disabled = false;
+            statusText.textContent =
+                "Camera failed to start. Check browser console.";
+        }
     });
 }
 
@@ -108,7 +139,11 @@ function predictWebcam() {
     if (video.currentTime !== lastVideoTime) {
         lastVideoTime = video.currentTime;
 
-        const result = poseLandmarker.detectForVideo(video, performance.now());
+        const result = poseLandmarker.detectForVideo(
+            video,
+            performance.now()
+        );
+
         const checkResult = checkSelectedStretch(result);
 
         updateCompletionProgress(checkResult);
@@ -125,122 +160,34 @@ function checkSelectedStretch(result) {
         return {
             isCorrect: false,
             side: null,
-            message: "No body detected. Move back so your upper body is visible."
+            message: "No body detected. Move back so your body is visible."
         };
     }
 
     const landmarks = result.landmarks[0];
 
-    if (selectedStretchId === "neck-side-stretch") {
-        return checkNeckSideStretch(landmarks);
+    if (selectedStretchId === "side-body-stretch") {
+        return checkSideBodyStretch(landmarks);
     }
 
-    if (selectedStretchId === "shoulder-rolls") {
-        return checkShoulderRolls(landmarks);
+    if (selectedStretchId === "neck-stretch-calf-raises") {
+        return checkNeckStretchCalfRaises(landmarks);
     }
 
-    if (selectedStretchId === "seated-torso-twist") {
-        return checkSeatedTorsoTwist(landmarks);
-    }
-
-    return {
-        isCorrect: false,
-        side: null,
-        message: "Unknown stretch."
-    };
-}
-
-function checkNeckSideStretch(landmarks) {
-    /*
-    Check left/right neck side stretch.
-    */
-    const nose = landmarks[0];
-    const leftShoulder = landmarks[11];
-    const rightShoulder = landmarks[12];
-
-    if (!areVisible([nose, leftShoulder, rightShoulder])) {
-        return {
-            isCorrect: false,
-            side: null,
-            message: "Make sure your face and shoulders are visible."
-        };
-    }
-
-    const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
-    const shoulderCenterX = (leftShoulder.x + rightShoulder.x) / 2;
-    const headOffset = nose.x - shoulderCenterX;
-    const tiltRatio = Math.abs(headOffset) / shoulderWidth;
-
-    if (tiltRatio > 0.12) {
-        if (headOffset < 0) {
-            return {
-                isCorrect: true,
-                side: "left",
-                message: "Good. Hold the left side neck stretch."
-            };
-        }
-
-        return {
-            isCorrect: true,
-            side: "right",
-            message: "Good. Hold the right side neck stretch."
-        };
+    if (selectedStretchId === "squat") {
+        return checkSquat(landmarks);
     }
 
     return {
         isCorrect: false,
         side: null,
-        message: "Tilt your head sideways more clearly."
+        message: "Unknown exercise."
     };
 }
 
-let shoulderHistory = [];
-
-function checkShoulderRolls(landmarks) {
+function checkSideBodyStretch(landmarks) {
     /*
-    Check shoulder movement.
-    */
-    const leftShoulder = landmarks[11];
-    const rightShoulder = landmarks[12];
-
-    if (!areVisible([leftShoulder, rightShoulder])) {
-        return {
-            isCorrect: false,
-            side: null,
-            message: "Make sure both shoulders are visible."
-        };
-    }
-
-    const averageShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-
-    shoulderHistory.push(averageShoulderY);
-
-    if (shoulderHistory.length > 45) {
-        shoulderHistory.shift();
-    }
-
-    const highest = Math.max(...shoulderHistory);
-    const lowest = Math.min(...shoulderHistory);
-    const movementRange = highest - lowest;
-
-    if (movementRange > 0.025) {
-        return {
-            isCorrect: true,
-            side: "single",
-            message: "Good. Shoulder movement detected."
-        };
-    }
-
-    return {
-        isCorrect: false,
-        side: null,
-        message: "Roll your shoulders slowly in a larger motion."
-    };
-}
-
-function checkSeatedTorsoTwist(landmarks) {
-    /*
-    Check left/right torso twist.
+    Check left/right upper body side lean.
     */
     const leftShoulder = landmarks[11];
     const rightShoulder = landmarks[12];
@@ -259,29 +206,206 @@ function checkSeatedTorsoTwist(landmarks) {
     const shoulderCenterX = (leftShoulder.x + rightShoulder.x) / 2;
     const hipCenterX = (leftHip.x + rightHip.x) / 2;
 
-    const twistOffset = shoulderCenterX - hipCenterX;
-    const twistRatio = Math.abs(twistOffset) / shoulderWidth;
+    const leanOffset = shoulderCenterX - hipCenterX;
+    const leanRatio = Math.abs(leanOffset) / shoulderWidth;
 
-    if (twistRatio > 0.08) {
-        if (twistOffset < 0) {
+    if (leanRatio > 0.08) {
+        if (leanOffset < 0) {
             return {
                 isCorrect: true,
                 side: "left",
-                message: "Good. Hold the left torso twist."
+                message: "Good. Hold the left side body stretch."
             };
         }
 
         return {
             isCorrect: true,
             side: "right",
-            message: "Good. Hold the right torso twist."
+            message: "Good. Hold the right side body stretch."
         };
     }
 
     return {
         isCorrect: false,
         side: null,
-        message: "Turn your upper body slightly more to one side."
+        message: "Lean your upper body more clearly to one side."
+    };
+}
+
+function checkNeckStretchCalfRaises(landmarks) {
+    /*
+    Check neck side tilt while counting calf raises.
+    User must complete 8 calf raises on each side.
+    */
+    const nose = landmarks[0];
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+
+    if (!areVisible([nose, leftShoulder, rightShoulder, leftHip, rightHip])) {
+        return {
+            isCorrect: false,
+            side: null,
+            message: "Make sure your face, shoulders, and body are visible."
+        };
+    }
+
+    const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+    const shoulderCenterX = (leftShoulder.x + rightShoulder.x) / 2;
+    const headOffset = nose.x - shoulderCenterX;
+    const tiltRatio = Math.abs(headOffset) / shoulderWidth;
+
+    if (tiltRatio <= 0.1) {
+        return {
+            isCorrect: false,
+            side: null,
+            message: "Tilt your head sideways for the neck stretch."
+        };
+    }
+
+    const side = headOffset < 0 ? "left" : "right";
+
+    const bodyY =
+        (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
+
+    if (neckCalfRaiseBaselineY[side] === null) {
+        neckCalfRaiseBaselineY[side] = bodyY;
+    }
+
+    const upThreshold = 0.012;
+    const returnThreshold = 0.005;
+
+    if (
+        neckCalfRaiseState[side] === "down" &&
+        bodyY < neckCalfRaiseBaselineY[side] - upThreshold
+    ) {
+        neckCalfRaiseState[side] = "up";
+    }
+
+    if (
+        neckCalfRaiseState[side] === "up" &&
+        bodyY > neckCalfRaiseBaselineY[side] - returnThreshold
+    ) {
+        neckCalfRaiseCount[side] += 1;
+        neckCalfRaiseState[side] = "down";
+        neckCalfRaiseBaselineY[side] = bodyY;
+    }
+
+    if (neckCalfRaiseCount[side] >= NECK_CALF_RAISES_PER_SIDE) {
+        completedSide[side] = true;
+    }
+
+    if (completedSide.left && completedSide.right) {
+        return {
+            isCorrect: true,
+            side: side,
+            isCountExercise: true,
+            message: "Both neck stretch sides completed."
+        };
+    }
+
+    return {
+        isCorrect: true,
+        side: side,
+        isCountExercise: true,
+        message:
+            `${side} side calf raises: ${neckCalfRaiseCount[side]}/${NECK_CALF_RAISES_PER_SIDE}`
+    };
+}
+
+function checkSquat(landmarks) {
+    /*
+    Count squat reps using a more forgiving hip-to-knee check.
+    This works better when full-body movement is hard to capture.
+    */
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+
+    if (!areVisible([
+        leftShoulder,
+        rightShoulder,
+        leftHip,
+        rightHip,
+        leftKnee,
+        rightKnee
+    ])) {
+        return {
+            isCorrect: false,
+            side: null,
+            message: "Move back so your shoulders, hips, and knees are visible."
+        };
+    }
+
+    const hipY = (leftHip.y + rightHip.y) / 2;
+    const kneeY = (leftKnee.y + rightKnee.y) / 2;
+
+    const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+    const torsoLength = Math.abs(hipY - shoulderY);
+
+    const hipKneeGap = kneeY - hipY;
+
+    if (squatBaselineHipY === null) {
+        squatBaselineHipY = hipY;
+        squatBaselineGap = hipKneeGap;
+    }
+
+    const hipDrop = hipY - squatBaselineHipY;
+
+    const enoughHipDrop = hipDrop > torsoLength * 0.22;
+    const closeToKnees = hipKneeGap < squatBaselineGap * 0.55;
+
+    const isSquatDown = enoughHipDrop || closeToKnees;
+
+    const returnedUp =
+        hipY < squatBaselineHipY + torsoLength * 0.10;
+
+    if (squatState === "up" && isSquatDown) {
+        squatState = "down";
+
+        return {
+            isCorrect: true,
+            side: "single",
+            isCountExercise: true,
+            message: `Squat detected. Stand back up. Reps: ${squatCount}/${REQUIRED_REPS}`
+        };
+    }
+
+    if (squatState === "down" && returnedUp) {
+        squatCount += 1;
+        squatState = "up";
+
+        squatBaselineHipY = hipY;
+        squatBaselineGap = hipKneeGap;
+
+        if (squatCount >= REQUIRED_REPS) {
+            completedSide.single = true;
+
+            return {
+                isCorrect: true,
+                side: "single",
+                isCountExercise: true,
+                message: "10 squats completed."
+            };
+        }
+
+        return {
+            isCorrect: true,
+            side: "single",
+            isCountExercise: true,
+            message: `Good rep. Squats: ${squatCount}/${REQUIRED_REPS}`
+        };
+    }
+
+    return {
+        isCorrect: true,
+        side: "single",
+        isCountExercise: true,
+        message: `Squats: ${squatCount}/${REQUIRED_REPS}. Lower your hips, then stand tall.`
     };
 }
 
@@ -304,12 +428,18 @@ function areVisible(points) {
 
 function updateCompletionProgress(checkResult) {
     /*
-    Update one-side or two-side progress.
+    Update timer-based or count-based progress.
     */
     statusText.textContent = checkResult.message;
 
     if (!checkResult.isCorrect || checkResult.side === null) {
         resetActiveHoldTimers();
+        return;
+    }
+
+    if (checkResult.isCountExercise) {
+        updateProgressBars();
+        updateCompleteButton();
         return;
     }
 
@@ -334,7 +464,7 @@ function updateSideHold(side) {
 
     const heldSeconds = (now - holdStartTime[side]) / 1000;
 
-    if (heldSeconds >= REQUIRED_HOLD_SECONDS) {
+    if (heldSeconds >= SIDE_BODY_HOLD_SECONDS) {
         completedSide[side] = true;
         holdStartTime[side] = null;
     }
@@ -359,8 +489,19 @@ function resetActiveHoldTimers() {
 
 function getSidePercent(side) {
     /*
-    Return progress percent for one side.
+    Return progress percent for timer-based or rep-based exercises.
     */
+    if (selectedStretchId === "neck-stretch-calf-raises") {
+        return Math.min(
+            (neckCalfRaiseCount[side] / NECK_CALF_RAISES_PER_SIDE) * 100,
+            100
+        );
+    }
+
+    if (selectedStretchId === "squat" && side === "single") {
+        return Math.min((squatCount / REQUIRED_REPS) * 100, 100);
+    }
+
     if (completedSide[side]) {
         return 100;
     }
@@ -370,9 +511,12 @@ function getSidePercent(side) {
     }
 
     const heldSeconds = (performance.now() - holdStartTime[side]) / 1000;
-    return Math.min((heldSeconds / REQUIRED_HOLD_SECONDS) * 100, 100);
-}
 
+    return Math.min(
+        (heldSeconds / SIDE_BODY_HOLD_SECONDS) * 100,
+        100
+    );
+}
 function updateProgressBars() {
     /*
     Refresh progress bar UI.
@@ -401,8 +545,8 @@ function updateCompleteButton() {
     Unlock complete button when required checks are done.
     */
     const needsTwoSides =
-        selectedStretchId === "neck-side-stretch" ||
-        selectedStretchId === "seated-torso-twist";
+        selectedStretchId === "side-body-stretch" ||
+        selectedStretchId === "neck-stretch-calf-raises";
 
     const isComplete = needsTwoSides
         ? completedSide.left && completedSide.right
@@ -413,6 +557,6 @@ function updateCompleteButton() {
     }
 
     completeButton.classList.remove("disabled-link");
-    completeButton.textContent = "Stretch Verified - Complete";
-    statusText.textContent = "Stretch verified. You can complete it now.";
+    completeButton.textContent = "Exercise Verified - Complete";
+    statusText.textContent = "Exercise verified. You can complete it now.";
 }
