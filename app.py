@@ -5,6 +5,8 @@ from data.leaderboard import get_reward_badge
 from utils.scoring import calculate_points
 from utils.stretch_rules import can_complete_stretch, get_completion_message
 from utils.auth import register_user, validate_login, update_user_points, get_user_data, get_all_users, add_friend, get_friends, get_friend_leaderboard, remove_friend
+from utils.levels import get_level_info
+from utils.streaks import get_user_streak, update_streak
 
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -140,6 +142,15 @@ def complete_stretch(stretch_id):
 
     session["completed_stretches"] = completed_stretches
 
+
+    points_earned = calculate_points(stretch)
+    username = session.get("username")
+    update_user_points(
+        username,
+        points_earned
+    )
+
+    update_streak(username)
     user_data = get_user_data(username)
     total_points = user_data["points"]
 
@@ -275,6 +286,47 @@ def remove_friend_page(friend):
         url_for("friends_page")
     )
 
+@app.route("/streak")
+def streak_page():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+
+    streak = get_user_streak(username)
+
+    return render_template(
+
+        "streak.html",
+
+        streak=streak
+    )
+
+
+@app.route("/profile")
+def profile_page():
+
+    username = session.get("username")
+
+    user_data = get_user_data(username)
+
+    streak = get_user_streak(username)
+    
+    level_data = get_level_info(
+        int(user_data["points"])
+    )
+
+    return render_template(
+
+    "profile.html",
+
+    user=user_data,
+
+    level_data=level_data,
+
+    streak=streak
+)
 
 
 if __name__ == "__main__":

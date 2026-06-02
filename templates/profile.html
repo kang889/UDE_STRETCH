@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="profile-page">
+
+    <div class="profile-header">
+
+        <div class="profile-avatar">
+
+            <img
+                src="/profile.png"
+                alt="Profile"
+            >
+
+        </div>
+
+        <div class="profile-info">
+
+            <h1>
+                {{ user.username }}
+            </h1>
+
+            <p class="profile-level">
+
+                Level {{ level_data.level }}
+
+            </p>
+
+            <div class="xp-bar">
+
+                <div
+                    class="xp-fill"
+                    style="width: {{ (level_data.current_xp / level_data.xp_needed) * 100 }}%;"
+                ></div>
+
+            </div>
+
+            <span class="xp-text">
+
+                {{ level_data.current_xp }}
+
+                /
+
+                {{ level_data.xp_needed }}
+
+                XP
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="rank-card">
+
+        <img
+            class="rank-card-badge"
+            src="/{{ level_data.badge }}"
+        >
+
+        <div class="rank-card-info">
+
+            <h3>
+
+                Current Rank :
+                {{ level_data.rank }}
+
+            </h3>
+
+            <p>
+
+                {{ level_data.xp_to_next_rank }}
+                more XP to next tier
+
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="profile-stats">
+
+        <div class="stat-card">
+
+            <h3>
+                Total Points
+            </h3>
+
+            <p>
+                {{ user.points }}
+            </p>
+
+        </div>
+
+        <div class="stat-card">
+
+            <h3>
+                Current Streak
+            </h3>
+
+            <p>
+                🔥 {{ streak }} Days
+            </p>
+
+        </div>
+
+    </div>
+
+    <a
+        class="logout-button"
+        href="{{ url_for('logout') }}"
+    >
+        Logout
+    </a>
+
+</section>
+
+{% endblock %}

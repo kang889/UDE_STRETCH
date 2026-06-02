@@ -3,22 +3,71 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>UDE Stretch Prototype</title>
 
     <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
+
     <main class="app-container">
+
         {% block content %}
         {% endblock %}
+
     </main>
+
+    {% if session.get("username") %}
+
+    <nav class="bottom-nav">
+
+        <a
+            href="{{ url_for('home') }}"
+            class="{% if request.endpoint == 'home' %}active{% endif %}"
+        >
+            🏠
+            <span>Home</span>
+        </a>
+
+        <a
+            href="{{ url_for('streak_page') }}"
+            class="{% if request.endpoint == 'streak_page' %}active{% endif %}"
+        >
+            🔥
+            <span>Streak</span>
+        </a>
+
+        <a
+            href="{{ url_for('friends_page') }}"
+            class="{% if request.endpoint == 'friends_page' %}active{% endif %}"
+        >
+            👥
+            <span>Friends</span>
+        </a>
+
+        <a
+            href="{{ url_for('profile_page') }}"
+            class="{% if request.endpoint == 'profile_page' %}active{% endif %}"
+        >
+            👤
+            <span>Profile</span>
+        </a>
+
+    </nav>
+
+    {% endif %}
 
     <script src="/script.js"></script>
 
     {% block scripts %}
     {% endblock %}
+
 </body>
 
 </html>
