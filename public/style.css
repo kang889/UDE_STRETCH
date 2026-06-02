@@ -53,6 +53,9 @@ body {
     min-height: 100vh;
 
     padding: 40px 24px;
+}
+
+.app-container {
     padding-bottom: 100px;
 }
 
@@ -577,6 +580,7 @@ input:focus {
     bottom: 0;
     left: 0;
 
+    height: 70px;
     width: 100%;
 
     display: flex;
@@ -886,7 +890,11 @@ input:focus {
 @media (max-width: 768px) {
 
     body {
-        padding: 24px 16px;
+        padding: 24px 16px 0;
+    }
+
+    .app-container {
+        padding-bottom: 90px;
     }
 
     h1 {
