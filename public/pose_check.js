@@ -162,7 +162,7 @@ function predictWebcam() {
 
         updateCompletionProgress(checkResult);
         const avatarMood = getAvatarMood(landmarks, checkResult);
-        drawAvatar(landmarks, checkResult.isCorrect);
+        drawAvatar(landmarks, avatarMood);
 
         
     }
