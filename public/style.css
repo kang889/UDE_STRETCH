@@ -1053,22 +1053,31 @@ input:focus {
     }
 
     .game-view-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .game-panel h3 {
+        font-size: 1rem;
+    }
+
+    .camera-frame {
+        min-height: 260px;
+    }
+
+    .avatar-frame {
+        min-height: 260px;
+        margin-top: 0;
+    }
+
+    #avatar-canvas {
+        height: 260px;
     }
 
     .guide-media-frame {
         min-height: 220px;
     }
-
-    .avatar-frame {
-        min-height: 360px;
-    }
-
-    #avatar-canvas {
-        height: 360px;
-    }
 }
-
 .avatar-frame {
     position: relative;
     width: 100%;
@@ -1102,12 +1111,27 @@ input:focus {
 }
 
 @media (max-width: 768px) {
+    .game-view-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .camera-frame {
+        min-height: 220px;
+    }
+
     .avatar-frame {
-        min-height: 340px;
+        min-height: 220px;
+        margin-top: 0;
     }
 
     #avatar-canvas {
-        height: 340px;
+        height: 220px;
+    }
+
+    .avatar-status {
+        font-size: 0.8rem;
+        padding: 10px;
     }
 }
 
