@@ -21,44 +21,38 @@
 </section>
 
 
-<section class="exercise-guide-card">
-
-    <div class="section-title-row">
-        <div>
-            <h2>Watch the Guide</h2>
-
-            <p>
-                Follow the movement shown in the guide before starting the camera check.
-            </p>
-        </div>
-    </div>
-
-    <div class="guide-media-frame">
-        {% if stretch.guide_media %}
-        <img src="{{ stretch.guide_media }}" alt="{{ stretch.name }} guide">
-        {% else %}
-        <div class="guide-placeholder">
-            Guide GIF will be placed here.
-        </div>
-        {% endif %}
-    </div>
-
-</section>
-
 
 <section class="exercise-layout">
 
     <section class="content-card">
-
-        <h2>Instructions</h2>
-
+    
+        <h2>Watch and Follow</h2>
+    
+        <p class="small-note">
+            Watch the guide first, then follow the steps below during the camera check.
+        </p>
+    
+        <div class="guide-media-frame instruction-guide-frame">
+            {% if stretch.guide_media %}
+            <img src="{{ stretch.guide_media }}" alt="{{ stretch.name }} guide">
+            {% else %}
+            <div class="guide-placeholder">
+                Guide GIF will be placed here.
+            </div>
+            {% endif %}
+        </div>
+    
+        <h2 style="margin-top: 28px;">
+            Instructions
+        </h2>
+    
         <ol class="instruction-list">
             {% for step in stretch.instructions %}
             <li>{{ step }}</li>
             {% endfor %}
         </ol>
-
-    </section>
+    
+        </section>
 
 
     <section class="camera-card exercise-game-card">
@@ -84,7 +78,6 @@
                     <video id="webcam" autoplay playsinline muted></video>
                     <canvas id="pose-canvas"></canvas>
                 </div>
-
             </div>
 
 

@@ -25,6 +25,8 @@ const singleProgressText = document.getElementById("single-progress-text");
 const avatarCanvas = document.getElementById("avatar-canvas");
 const avatarStatus = document.getElementById("avatar-status");
 
+
+
 const avatarContext = avatarCanvas
     ? avatarCanvas.getContext("2d")
     : null;
@@ -158,9 +160,11 @@ function predictWebcam() {
                 ? result.landmarks[0]
                 : null;
 
+        updateCompletionProgress(checkResult);
+        const avatarMood = getAvatarMood(landmarks, checkResult);
         drawAvatar(landmarks, checkResult.isCorrect);
 
-        updateCompletionProgress(checkResult);
+        
     }
 
     requestAnimationFrame(predictWebcam);
@@ -575,9 +579,45 @@ function updateCompleteButton() {
     statusText.textContent = "Exercise verified. You can complete it now.";
 }
 
+function getAvatarMood(landmarks, checkResult) {
+    /*
+    Decide avatar visual state.
+    */
+    if (!landmarks) {
+        return "waiting";
+    }
+
+    if (isExerciseComplete()) {
+        return "complete";
+    }
+
+    if (checkResult.isCorrect) {
+        return "correct";
+    }
+
+    return "confused";
+}
+
+
+function isExerciseComplete() {
+    /*
+    Check if current exercise is fully completed.
+    */
+    const needsTwoSides =
+        selectedStretchId === "side-body-stretch" ||
+        selectedStretchId === "neck-stretch-calf-raises";
+
+    if (needsTwoSides) {
+        return completedSide.left && completedSide.right;
+    }
+
+    return completedSide.single;
+}
+
+
 function resizeAvatarCanvas() {
     /*
-    Match canvas drawing size to displayed size.
+    Match canvas size to displayed size.
     */
     if (!avatarCanvas) {
         return;
@@ -598,7 +638,7 @@ function resizeAvatarCanvas() {
 
 function landmarkToCanvas(point) {
     /*
-    Convert MediaPipe normalized position to canvas position.
+    Convert MediaPipe normalized landmark to canvas coordinates.
     */
     return {
         x: point.x * avatarCanvas.width,
@@ -607,12 +647,42 @@ function landmarkToCanvas(point) {
 }
 
 
-function drawAvatar(landmarks, isCorrectPose) {
+function getAvatarColors(mood) {
     /*
-    Draw a simple 2D body avatar from MediaPipe landmarks.
+    Return avatar colours based on mood.
+    */
+    if (mood === "complete") {
+        return {
+            body: "#fbbf24",
+            joint: "#fde68a",
+            glow: "#facc15"
+        };
+    }
 
-    Green = correct movement detected.
-    Grey = wrong pose or no pose.
+    if (mood === "correct") {
+        return {
+            body: "#34d399",
+            joint: "#bbf7d0",
+            glow: "#22c55e"
+        };
+    }
+
+    return {
+        body: "#6b7280",
+        joint: "#d1d5db",
+        glow: null
+    };
+}
+
+
+function drawAvatar(landmarks, mood) {
+    /*
+    Draw simple game avatar.
+
+    waiting  = grey placeholder
+    confused = grey skeleton + question mark
+    correct  = green skeleton + glow
+    complete = gold skeleton + sparkles
     */
     if (!avatarCanvas || !avatarContext) {
         return;
@@ -627,16 +697,14 @@ function drawAvatar(landmarks, isCorrectPose) {
         avatarCanvas.height
     );
 
-    const avatarColor = isCorrectPose
-        ? "#34d399"
-        : "#6b7280";
+    const colors = getAvatarColors(mood);
 
-    const jointColor = isCorrectPose
-        ? "#bbf7d0"
-        : "#d1d5db";
+    if (colors.glow) {
+        drawAvatarGlow(colors.glow);
+    }
 
     if (!landmarks) {
-        drawEmptyAvatar(avatarColor);
+        drawEmptyAvatar(colors.body);
 
         if (avatarStatus) {
             avatarStatus.textContent = "No pose detected.";
@@ -645,24 +713,52 @@ function drawAvatar(landmarks, isCorrectPose) {
         return;
     }
 
+    drawAvatarBody(landmarks, colors.body, colors.joint);
+
+    if (mood === "confused") {
+        drawConfusedBubble(landmarks);
+    }
+
+    if (mood === "complete") {
+        drawCelebrationSparkles();
+    }
+
+    if (avatarStatus) {
+        if (mood === "complete") {
+            avatarStatus.textContent = "Exercise complete!";
+        } else if (mood === "correct") {
+            avatarStatus.textContent = "Good form!";
+        } else if (mood === "confused") {
+            avatarStatus.textContent = "Adjust your pose.";
+        } else {
+            avatarStatus.textContent = "Avatar waiting for pose...";
+        }
+    }
+}
+
+
+function drawAvatarBody(landmarks, bodyColor, jointColor) {
+    /*
+    Draw body using MediaPipe landmarks.
+    */
     const bodyConnections = [
-        [11, 12], // shoulders
-        [11, 13], // left upper arm
-        [13, 15], // left lower arm
-        [12, 14], // right upper arm
-        [14, 16], // right lower arm
-        [11, 23], // left torso
-        [12, 24], // right torso
-        [23, 24], // hips
-        [23, 25], // left upper leg
-        [25, 27], // left lower leg
-        [24, 26], // right upper leg
-        [26, 28]  // right lower leg
+        [11, 12],
+        [11, 13],
+        [13, 15],
+        [12, 14],
+        [14, 16],
+        [11, 23],
+        [12, 24],
+        [23, 24],
+        [23, 25],
+        [25, 27],
+        [24, 26],
+        [26, 28]
     ];
 
     avatarContext.lineWidth = 8;
     avatarContext.lineCap = "round";
-    avatarContext.strokeStyle = avatarColor;
+    avatarContext.strokeStyle = bodyColor;
 
     for (const connection of bodyConnections) {
         const start = landmarks[connection[0]];
@@ -681,20 +777,14 @@ function drawAvatar(landmarks, isCorrectPose) {
         avatarContext.stroke();
     }
 
-    drawAvatarHead(landmarks, avatarColor);
+    drawAvatarHead(landmarks, bodyColor);
     drawAvatarJoints(landmarks, jointColor);
-
-    if (avatarStatus) {
-        avatarStatus.textContent = isCorrectPose
-            ? "Correct movement detected."
-            : "Adjust your pose to match the exercise.";
-    }
 }
 
 
-function drawAvatarHead(landmarks, avatarColor) {
+function drawAvatarHead(landmarks, bodyColor) {
     /*
-    Draw head using the nose landmark as a rough position.
+    Draw avatar head using nose landmark.
     */
     const nose = landmarks[0];
 
@@ -713,14 +803,14 @@ function drawAvatarHead(landmarks, avatarColor) {
         Math.PI * 2
     );
 
-    avatarContext.fillStyle = avatarColor;
+    avatarContext.fillStyle = bodyColor;
     avatarContext.fill();
 }
 
 
 function drawAvatarJoints(landmarks, jointColor) {
     /*
-    Draw visible body joints.
+    Draw joint circles.
     */
     const jointIndexes = [
         11, 12,
@@ -756,15 +846,15 @@ function drawAvatarJoints(landmarks, jointColor) {
 }
 
 
-function drawEmptyAvatar(avatarColor) {
+function drawEmptyAvatar(bodyColor) {
     /*
-    Draw a simple grey placeholder avatar when no pose is detected.
+    Draw placeholder avatar when no pose is detected.
     */
     const centerX = avatarCanvas.width / 2;
     const centerY = avatarCanvas.height / 2;
 
-    avatarContext.strokeStyle = avatarColor;
-    avatarContext.fillStyle = avatarColor;
+    avatarContext.strokeStyle = bodyColor;
+    avatarContext.fillStyle = bodyColor;
     avatarContext.lineWidth = 8;
     avatarContext.lineCap = "round";
 
@@ -797,4 +887,110 @@ function drawEmptyAvatar(avatarColor) {
     avatarContext.moveTo(centerX, centerY + 40);
     avatarContext.lineTo(centerX + 40, centerY + 100);
     avatarContext.stroke();
+}
+
+
+function drawAvatarGlow(glowColor) {
+    /*
+    Draw glow behind avatar for correct/complete states.
+    */
+    const centerX = avatarCanvas.width / 2;
+    const centerY = avatarCanvas.height / 2;
+
+    const gradient = avatarContext.createRadialGradient(
+        centerX,
+        centerY,
+        20,
+        centerX,
+        centerY,
+        avatarCanvas.width * 0.45
+    );
+
+    gradient.addColorStop(0, glowColor + "66");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+    avatarContext.fillStyle = gradient;
+    avatarContext.fillRect(
+        0,
+        0,
+        avatarCanvas.width,
+        avatarCanvas.height
+    );
+}
+
+
+function drawConfusedBubble(landmarks) {
+    /*
+    Draw question mark bubble near the head.
+    */
+    const nose = landmarks[0];
+
+    if (!areVisible([nose])) {
+        return;
+    }
+
+    const nosePoint = landmarkToCanvas(nose);
+
+    const bubbleX = nosePoint.x + 36;
+    const bubbleY = nosePoint.y - 36;
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        bubbleX,
+        bubbleY,
+        20,
+        0,
+        Math.PI * 2
+    );
+
+    avatarContext.fillStyle = "rgba(255, 255, 255, 0.12)";
+    avatarContext.fill();
+
+    avatarContext.fillStyle = "#ffffff";
+    avatarContext.font = "bold 24px Arial";
+    avatarContext.textAlign = "center";
+    avatarContext.textBaseline = "middle";
+    avatarContext.fillText("?", bubbleX, bubbleY);
+}
+
+
+function drawCelebrationSparkles() {
+    /*
+    Draw simple sparkle particles for complete state.
+    */
+    const sparkles = [
+        [0.25, 0.25],
+        [0.75, 0.28],
+        [0.18, 0.62],
+        [0.82, 0.66],
+        [0.50, 0.18],
+        [0.50, 0.82]
+    ];
+
+    avatarContext.fillStyle = "#fde68a";
+
+    for (const sparkle of sparkles) {
+        const x = avatarCanvas.width * sparkle[0];
+        const y = avatarCanvas.height * sparkle[1];
+
+        avatarContext.beginPath();
+        avatarContext.arc(
+            x,
+            y,
+            5,
+            0,
+            Math.PI * 2
+        );
+
+        avatarContext.fill();
+    }
+
+    avatarContext.fillStyle = "#fbbf24";
+    avatarContext.font = "bold 24px Arial";
+    avatarContext.textAlign = "center";
+    avatarContext.fillText(
+        "Completed!",
+        avatarCanvas.width / 2,
+        42
+    );
 }
