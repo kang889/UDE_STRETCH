@@ -140,17 +140,10 @@ def complete_stretch(stretch_id):
             points_earned
         )
 
+        update_streak(username)
+
     session["completed_stretches"] = completed_stretches
 
-
-    points_earned = calculate_points(stretch)
-    username = session.get("username")
-    update_user_points(
-        username,
-        points_earned
-    )
-
-    update_streak(username)
     user_data = get_user_data(username)
     total_points = user_data["points"]
 
