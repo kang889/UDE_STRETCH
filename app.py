@@ -7,6 +7,7 @@ from utils.stretch_rules import can_complete_stretch, get_completion_message
 from utils.auth import register_user, validate_login, update_user_points, get_user_data, get_all_users, add_friend, get_friends, get_friend_leaderboard, remove_friend
 from utils.levels import get_level_info
 from utils.streaks import get_user_streak, update_streak
+from data.items import get_all_items, get_item_by_id, is_item_unlocked
 
 
 app = Flask(__name__, static_folder="public", static_url_path="")
@@ -104,7 +105,13 @@ def stretch_page(stretch_id):
     if stretch is None:
         return redirect(url_for("home"))
 
-    return render_template("stretch.html", stretch=stretch)
+    selected_item = session.get("selected_item", "none")
+
+    return render_template(
+    "stretch.html",
+    stretch=stretch,
+    selected_item=selected_item,
+)
 
 @app.route("/complete/<stretch_id>")
 def complete_stretch(stretch_id):
@@ -321,6 +328,37 @@ def profile_page():
     streak=streak
 )
 
+@app.route("/shop", methods=["GET", "POST"])
+def shop_page():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session.get("username")
+    user_data = get_user_data(username)
+
+    total_points = int(user_data["points"])
+    items = get_all_items()
+
+    if request.method == "POST":
+
+        selected_item_id = request.form["item_id"]
+        selected_item = get_item_by_id(selected_item_id)
+
+        if (
+            selected_item is not None and
+            is_item_unlocked(selected_item, total_points)
+        ):
+            session["selected_item"] = selected_item_id
+
+    selected_item = session.get("selected_item", "none")
+
+    return render_template(
+        "shop.html",
+        items=items,
+        total_points=total_points,
+        selected_item=selected_item,
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

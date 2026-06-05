@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="hero-card">
+
+    <h1>Avatar Item Shop</h1>
+
+    <p class="intro-text">
+        Unlock simple avatar items by earning movement points.
+    </p>
+
+    <div class="points-box" style="margin-top: 20px;">
+        <strong>Your Points: {{ total_points }}</strong>
+    </div>
+
+</section>
+
+
+<section class="stretch-grid">
+
+    {% for item in items %}
+
+    <article class="stretch-card">
+
+        <h3>
+            {% if item.id == "mystery" %}
+            <h3>🔒 {{ item.name }}</h3>
+            {% elif item.id == "crown" %}
+            <h3>👑 {{ item.name }}</h3>
+            {% elif item.id == "halo" %}
+            <h3>😇 {{ item.name }}</h3>
+            {% elif item.id == "sunglasses" %}
+            <h3>🕶 {{ item.name }}</h3>
+            {% else %}
+            <h3>🙂 {{ item.name }}</h3>
+            {% endif %}
+
+            {{ item.name }}
+        </h3>
+
+        <p>
+            {{ item.description }}
+        </p>
+
+        <div class="stretch-meta">
+            <span>
+                {{ item.required_points }} pts
+            </span>
+
+            {% if item.id == "mystery" %}
+            <p class="small-note">
+                Locked future item. Reach {{ item.required_points }} points to preview this reward.
+            </p>
+            {% elif total_points >= item.required_points %}
+            <!-- equip button -->
+            {% else %}
+            <p class="small-note">
+                Earn more points to unlock this item.
+            </p>
+            {% endif %}
+        </div>
+
+        {% if total_points >= item.required_points %}
+
+        {% if selected_item == item.id %}
+
+        <p class="completed-label">
+            Equipped
+        </p>
+
+        {% else %}
+
+        <form method="POST">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+
+            <button class="primary-button" type="submit">
+                Equip Item
+            </button>
+        </form>
+
+        {% endif %}
+
+        {% else %}
+
+        <p class="small-note">
+            Earn more points to unlock this item.
+        </p>
+
+        {% endif %}
+
+    </article>
+
+    {% endfor %}
+
+</section>
+
+
+<section class="bottom-actions">
+
+    <a class="secondary-button" href="{{ url_for('home') }}">
+        Back to Home
+    </a>
+
+</section>
+
+{% endblock %}

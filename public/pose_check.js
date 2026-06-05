@@ -31,6 +31,10 @@ const avatarContext = avatarCanvas
     ? avatarCanvas.getContext("2d")
     : null;
 
+const selectedAvatarItem = avatarCanvas
+    ? avatarCanvas.dataset.selectedItem || "none"
+    : "none";
+
 const SIDE_BODY_HOLD_SECONDS = 8;
 const REQUIRED_REPS = 10;
 const NECK_CALF_RAISES_PER_SIDE = 8;
@@ -714,6 +718,8 @@ function drawAvatar(landmarks, mood) {
     }
 
     drawAvatarBody(landmarks, colors.body, colors.joint);
+    drawSelectedAvatarItem(landmarks, mood);
+    
 
     if (mood === "confused") {
         drawConfusedBubble(landmarks);
@@ -993,4 +999,192 @@ function drawCelebrationSparkles() {
         avatarCanvas.width / 2,
         42
     );
+}
+
+function drawSelectedAvatarItem(landmarks, mood) {
+    /*
+    Draw equipped cosmetic item on the avatar.
+    */
+    if (!landmarks || selectedAvatarItem === "none") {
+        return;
+    }
+
+    if (selectedAvatarItem === "crown") {
+        drawCrownItem(landmarks);
+    }
+
+    if (selectedAvatarItem === "halo") {
+        drawHaloItem(landmarks);
+    }
+
+    if (selectedAvatarItem === "sunglasses") {
+        drawSunglassesItem(landmarks);
+    }
+}
+
+
+function getHeadItemPosition(landmarks) {
+    /*
+    Use nose and shoulders to position item above head.
+    */
+    const nose = landmarks[0];
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+
+    if (!areVisible([nose, leftShoulder, rightShoulder])) {
+        return null;
+    }
+
+    const nosePoint = landmarkToCanvas(nose);
+
+    const shoulderWidth =
+        Math.abs(leftShoulder.x - rightShoulder.x) *
+        avatarCanvas.width;
+
+    return {
+        x: nosePoint.x,
+        y: nosePoint.y,
+        size: Math.max(24, shoulderWidth * 0.22)
+    };
+}
+
+
+function drawCrownItem(landmarks) {
+    /*
+    Draw simple crown above avatar head.
+    */
+    const item = getHeadItemPosition(landmarks);
+
+    if (!item) {
+        return;
+    }
+
+    const crownY = item.y - item.size * 1.45;
+    const crownWidth = item.size * 1.6;
+    const crownHeight = item.size * 0.7;
+
+    avatarContext.fillStyle = "#fbbf24";
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(item.x - crownWidth / 2, crownY + crownHeight);
+    avatarContext.lineTo(item.x - crownWidth / 3, crownY);
+    avatarContext.lineTo(item.x, crownY + crownHeight * 0.45);
+    avatarContext.lineTo(item.x + crownWidth / 3, crownY);
+    avatarContext.lineTo(item.x + crownWidth / 2, crownY + crownHeight);
+    avatarContext.closePath();
+    avatarContext.fill();
+
+    avatarContext.fillStyle = "#fde68a";
+    avatarContext.fillRect(
+        item.x - crownWidth / 2,
+        crownY + crownHeight * 0.75,
+        crownWidth,
+        crownHeight * 0.25
+    );
+}
+
+
+function drawHaloItem(landmarks) {
+    /*
+    Draw halo above avatar head.
+    */
+    const item = getHeadItemPosition(landmarks);
+
+    if (!item) {
+        return;
+    }
+
+    avatarContext.strokeStyle = "#fde68a";
+    avatarContext.lineWidth = 5;
+
+    avatarContext.beginPath();
+    avatarContext.ellipse(
+        item.x,
+        item.y - item.size * 1.45,
+        item.size * 0.75,
+        item.size * 0.25,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    avatarContext.stroke();
+}
+
+
+function drawSunglassesItem(landmarks) {
+    /*
+    Draw sunglasses on the avatar face.
+    */
+    const nose = landmarks[0];
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+
+    if (!areVisible([nose, leftShoulder, rightShoulder])) {
+        return;
+    }
+
+    const nosePoint = landmarkToCanvas(nose);
+
+    const shoulderWidth =
+        Math.abs(leftShoulder.x - rightShoulder.x) *
+        avatarCanvas.width;
+
+    const glassesWidth = Math.max(36, shoulderWidth * 0.42);
+    const glassesHeight = Math.max(14, shoulderWidth * 0.12);
+
+    const lensWidth = glassesWidth * 0.38;
+    const lensHeight = glassesHeight;
+    const gap = glassesWidth * 0.08;
+
+    const centerY = nosePoint.y - 6;
+
+    const leftX = nosePoint.x - gap / 2 - lensWidth;
+    const rightX = nosePoint.x + gap / 2;
+    const topY = centerY - lensHeight / 2;
+
+    avatarContext.fillStyle = "#111827";
+    avatarContext.strokeStyle = "#9ca3af";
+    avatarContext.lineWidth = 2;
+
+    // left lens
+    avatarContext.beginPath();
+    avatarContext.roundRect(
+        leftX,
+        topY,
+        lensWidth,
+        lensHeight,
+        6
+    );
+    avatarContext.fill();
+    avatarContext.stroke();
+
+    // right lens
+    avatarContext.beginPath();
+    avatarContext.roundRect(
+        rightX,
+        topY,
+        lensWidth,
+        lensHeight,
+        6
+    );
+    avatarContext.fill();
+    avatarContext.stroke();
+
+    // bridge
+    avatarContext.beginPath();
+    avatarContext.moveTo(leftX + lensWidth, centerY);
+    avatarContext.lineTo(rightX, centerY);
+    avatarContext.stroke();
+
+    // side arms
+    avatarContext.beginPath();
+    avatarContext.moveTo(leftX, centerY);
+    avatarContext.lineTo(leftX - 10, centerY - 4);
+    avatarContext.stroke();
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(rightX + lensWidth, centerY);
+    avatarContext.lineTo(rightX + lensWidth + 10, centerY - 4);
+    avatarContext.stroke();
 }
