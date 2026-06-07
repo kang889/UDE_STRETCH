@@ -745,86 +745,247 @@ function drawAvatar(landmarks, mood) {
 
 function drawAvatarBody(landmarks, bodyColor, jointColor) {
     /*
-    Draw body using MediaPipe landmarks.
+    Draw a more human-like avatar using MediaPipe landmarks.
+    Uses thicker limbs, filled torso, head, hands, and feet.
     */
-    const bodyConnections = [
-        [11, 12],
-        [11, 13],
-        [13, 15],
-        [12, 14],
-        [14, 16],
-        [11, 23],
-        [12, 24],
-        [23, 24],
-        [23, 25],
-        [25, 27],
-        [24, 26],
-        [26, 28]
-    ];
 
-    avatarContext.lineWidth = 8;
-    avatarContext.lineCap = "round";
-    avatarContext.strokeStyle = bodyColor;
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
+    const leftElbow = landmarks[13];
+    const rightElbow = landmarks[14];
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
 
-    for (const connection of bodyConnections) {
-        const start = landmarks[connection[0]];
-        const end = landmarks[connection[1]];
+    const leftHip = landmarks[23];
+    const rightHip = landmarks[24];
+    const leftKnee = landmarks[25];
+    const rightKnee = landmarks[26];
+    const leftAnkle = landmarks[27];
+    const rightAnkle = landmarks[28];
 
-        if (!areVisible([start, end])) {
-            continue;
-        }
+    /*
+    Draw limbs first so the torso/head sits on top.
+    */
+    drawRoundedLimb(leftShoulder, leftElbow, bodyColor, 16);
+    drawRoundedLimb(leftElbow, leftWrist, bodyColor, 14);
 
-        const startPoint = landmarkToCanvas(start);
-        const endPoint = landmarkToCanvas(end);
+    drawRoundedLimb(rightShoulder, rightElbow, bodyColor, 16);
+    drawRoundedLimb(rightElbow, rightWrist, bodyColor, 14);
 
-        avatarContext.beginPath();
-        avatarContext.moveTo(startPoint.x, startPoint.y);
-        avatarContext.lineTo(endPoint.x, endPoint.y);
-        avatarContext.stroke();
-    }
+    drawRoundedLimb(leftHip, leftKnee, bodyColor, 18);
+    drawRoundedLimb(leftKnee, leftAnkle, bodyColor, 16);
+
+    drawRoundedLimb(rightHip, rightKnee, bodyColor, 18);
+    drawRoundedLimb(rightKnee, rightAnkle, bodyColor, 16);
+
+    drawAvatarTorso(
+        leftShoulder,
+        rightShoulder,
+        leftHip,
+        rightHip,
+        bodyColor
+    );
 
     drawAvatarHead(landmarks, bodyColor);
+
+    drawHandsAndFeet(
+        leftWrist,
+        rightWrist,
+        leftAnkle,
+        rightAnkle,
+        jointColor
+    );
+
     drawAvatarJoints(landmarks, jointColor);
 }
 
+function drawRoundedLimb(startLandmark, endLandmark, color, width) {
+    /*
+    Draw one thick rounded limb segment.
+    */
+    if (!areVisible([startLandmark, endLandmark])) {
+        return;
+    }
+
+    const start = landmarkToCanvas(startLandmark);
+    const end = landmarkToCanvas(endLandmark);
+
+    avatarContext.strokeStyle = color;
+    avatarContext.lineWidth = width;
+    avatarContext.lineCap = "round";
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(start.x, start.y);
+    avatarContext.lineTo(end.x, end.y);
+    avatarContext.stroke();
+}
+
+function drawAvatarTorso(
+    leftShoulder,
+    rightShoulder,
+    leftHip,
+    rightHip,
+    bodyColor
+) {
+    /*
+    Draw a filled torso shape using shoulders and hips.
+    */
+    if (!areVisible([
+        leftShoulder,
+        rightShoulder,
+        leftHip,
+        rightHip
+    ])) {
+        return;
+    }
+
+    const ls = landmarkToCanvas(leftShoulder);
+    const rs = landmarkToCanvas(rightShoulder);
+    const lh = landmarkToCanvas(leftHip);
+    const rh = landmarkToCanvas(rightHip);
+
+    avatarContext.save();
+
+    avatarContext.globalAlpha = 0.88;
+    avatarContext.fillStyle = bodyColor;
+    avatarContext.strokeStyle = bodyColor;
+    avatarContext.lineWidth = 4;
+
+    avatarContext.beginPath();
+    avatarContext.moveTo(ls.x, ls.y);
+    avatarContext.lineTo(rs.x, rs.y);
+    avatarContext.lineTo(rh.x, rh.y);
+    avatarContext.lineTo(lh.x, lh.y);
+    avatarContext.closePath();
+
+    avatarContext.fill();
+    avatarContext.stroke();
+
+    avatarContext.restore();
+}
 
 function drawAvatarHead(landmarks, bodyColor) {
     /*
-    Draw avatar head using nose landmark.
+    Draw a larger human-like head with a simple face.
     */
     const nose = landmarks[0];
+    const leftShoulder = landmarks[11];
+    const rightShoulder = landmarks[12];
 
-    if (!areVisible([nose])) {
+    if (!areVisible([nose, leftShoulder, rightShoulder])) {
         return;
     }
 
     const nosePoint = landmarkToCanvas(nose);
 
+    const shoulderWidth =
+        Math.abs(leftShoulder.x - rightShoulder.x) *
+        avatarCanvas.width;
+
+    const headRadius = Math.max(18, shoulderWidth * 0.16);
+
+    const headX = nosePoint.x;
+    const headY = nosePoint.y - headRadius * 0.15;
+
+    avatarContext.fillStyle = bodyColor;
+
     avatarContext.beginPath();
     avatarContext.arc(
-        nosePoint.x,
-        nosePoint.y,
-        18,
+        headX,
+        headY,
+        headRadius,
         0,
         Math.PI * 2
     );
-
-    avatarContext.fillStyle = bodyColor;
     avatarContext.fill();
+
+    /*
+    Simple face.
+    */
+    avatarContext.fillStyle = "#111827";
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        headX - headRadius * 0.32,
+        headY - headRadius * 0.1,
+        Math.max(2, headRadius * 0.08),
+        0,
+        Math.PI * 2
+    );
+    avatarContext.fill();
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        headX + headRadius * 0.32,
+        headY - headRadius * 0.1,
+        Math.max(2, headRadius * 0.08),
+        0,
+        Math.PI * 2
+    );
+    avatarContext.fill();
+
+    avatarContext.strokeStyle = "#111827";
+    avatarContext.lineWidth = 2;
+    avatarContext.lineCap = "round";
+
+    avatarContext.beginPath();
+    avatarContext.arc(
+        headX,
+        headY + headRadius * 0.12,
+        headRadius * 0.28,
+        0,
+        Math.PI
+    );
+    avatarContext.stroke();
 }
 
+function drawHandsAndFeet(
+    leftWrist,
+    rightWrist,
+    leftAnkle,
+    rightAnkle,
+    jointColor
+) {
+    /*
+    Draw simple hands and feet.
+    */
+    const points = [
+        leftWrist,
+        rightWrist,
+        leftAnkle,
+        rightAnkle
+    ];
+
+    avatarContext.fillStyle = jointColor;
+
+    for (const point of points) {
+        if (!areVisible([point])) {
+            continue;
+        }
+
+        const canvasPoint = landmarkToCanvas(point);
+
+        avatarContext.beginPath();
+        avatarContext.arc(
+            canvasPoint.x,
+            canvasPoint.y,
+            9,
+            0,
+            Math.PI * 2
+        );
+        avatarContext.fill();
+    }
+}
 
 function drawAvatarJoints(landmarks, jointColor) {
     /*
-    Draw joint circles.
+    Draw subtle joint highlights.
     */
     const jointIndexes = [
         11, 12,
         13, 14,
-        15, 16,
         23, 24,
-        25, 26,
-        27, 28
+        25, 26
     ];
 
     avatarContext.fillStyle = jointColor;
@@ -842,7 +1003,7 @@ function drawAvatarJoints(landmarks, jointColor) {
         avatarContext.arc(
             point.x,
             point.y,
-            6,
+            5,
             0,
             Math.PI * 2
         );
@@ -850,7 +1011,6 @@ function drawAvatarJoints(landmarks, jointColor) {
         avatarContext.fill();
     }
 }
-
 
 function drawEmptyAvatar(bodyColor) {
     /*
