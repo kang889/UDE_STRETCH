@@ -35,6 +35,11 @@
             <span>Home</span>
         </a>
 
+        <a href="{{ url_for('shop_page') }}" class="{% if request.endpoint == 'shop_page' %}active{% endif %}">
+            🛍
+            <span>Shop</span>
+        </a>
+
         <a
             href="{{ url_for('streak_page') }}"
             class="{% if request.endpoint == 'streak_page' %}active{% endif %}"

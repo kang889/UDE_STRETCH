@@ -7,7 +7,8 @@
     <h1>Avatar Item Shop</h1>
 
     <p class="intro-text">
-        Unlock simple avatar items by earning movement points.
+        Unlock avatar items by earning movement points. By default, your avatar uses your latest unlocked item, but you
+        can manually equip any unlocked item here.
     </p>
 
     <div class="points-box" style="margin-top: 20px;">
@@ -25,18 +26,16 @@
 
         <h3>
             {% if item.id == "mystery" %}
-            <h3>🔒 {{ item.name }}</h3>
+            🔒 {{ item.name }}
             {% elif item.id == "crown" %}
-            <h3>👑 {{ item.name }}</h3>
+            👑 {{ item.name }}
             {% elif item.id == "halo" %}
-            <h3>😇 {{ item.name }}</h3>
+            😇 {{ item.name }}
             {% elif item.id == "sunglasses" %}
-            <h3>🕶 {{ item.name }}</h3>
+            🕶 {{ item.name }}
             {% else %}
-            <h3>🙂 {{ item.name }}</h3>
+            🙂 {{ item.name }}
             {% endif %}
-
-            {{ item.name }}
         </h3>
 
         <p>
@@ -48,20 +47,23 @@
                 {{ item.required_points }} pts
             </span>
 
-            {% if item.id == "mystery" %}
-            <p class="small-note">
-                Locked future item. Reach {{ item.required_points }} points to preview this reward.
-            </p>
+            {% if item.get("is_future_item", False) %}
+            <span>Future Reward</span>
             {% elif total_points >= item.required_points %}
-            <!-- equip button -->
+            <span>Unlocked</span>
             {% else %}
-            <p class="small-note">
-                Earn more points to unlock this item.
-            </p>
+            <span>Locked</span>
             {% endif %}
         </div>
 
-        {% if total_points >= item.required_points %}
+
+        {% if item.get("is_future_item", False) %}
+
+        <p class="small-note">
+            Locked future item. Reach {{ item.required_points }} points to preview this reward.
+        </p>
+
+        {% elif total_points >= item.required_points %}
 
         {% if selected_item == item.id %}
 
@@ -84,7 +86,7 @@
         {% else %}
 
         <p class="small-note">
-            Earn more points to unlock this item.
+            Earn {{ item.required_points - total_points }} more points to unlock this item.
         </p>
 
         {% endif %}
@@ -92,15 +94,6 @@
     </article>
 
     {% endfor %}
-
-</section>
-
-
-<section class="bottom-actions">
-
-    <a class="secondary-button" href="{{ url_for('home') }}">
-        Back to Home
-    </a>
 
 </section>
 

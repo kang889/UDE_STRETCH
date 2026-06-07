@@ -7,13 +7,34 @@ from utils.stretch_rules import can_complete_stretch, get_completion_message
 from utils.auth import register_user, validate_login, update_user_points, get_user_data, get_all_users, add_friend, get_friends, get_friend_leaderboard, remove_friend
 from utils.levels import get_level_info
 from utils.streaks import get_user_streak, update_streak
-from data.items import get_all_items, get_item_by_id, is_item_unlocked
+from data.items import get_all_items, get_item_by_id, is_item_unlocked, get_latest_unlocked_item
 
 
 app = Flask(__name__, static_folder="public", static_url_path="")
 
 # Needed for Flask session storage.
 app.secret_key = "ude-stretch-prototype-secret"
+
+def get_active_avatar_item(total_points):
+    """
+    Use the user's manually selected item if it is still valid.
+    Otherwise, use the latest unlocked item by default.
+    """
+
+    selected_item_id = session.get("selected_item")
+
+    if selected_item_id:
+
+        selected_item = get_item_by_id(selected_item_id)
+
+        if (
+            selected_item is not None
+            and not selected_item.get("is_future_item", False)
+            and is_item_unlocked(selected_item, total_points)
+        ):
+            return selected_item_id
+
+    return get_latest_unlocked_item(total_points)
 
 
 @app.route("/")
@@ -95,23 +116,28 @@ def logout():
 
 @app.route("/stretch/<stretch_id>")
 def stretch_page(stretch_id):
+
     if "username" not in session:
         return redirect(url_for("login"))
-    """
-    Show selected stretch instructions.
-    """
+
     stretch = get_stretch_by_id(stretch_id)
 
     if stretch is None:
         return redirect(url_for("home"))
 
-    selected_item = session.get("selected_item", "none")
+    username = session.get("username")
+    user_data = get_user_data(username)
+
+    total_points = int(user_data["points"])
+
+    selected_item = get_active_avatar_item(total_points)
 
     return render_template(
-    "stretch.html",
-    stretch=stretch,
-    selected_item=selected_item,
-)
+        "stretch.html",
+        stretch=stretch,
+        selected_item=selected_item,
+    )
+
 
 @app.route("/complete/<stretch_id>")
 def complete_stretch(stretch_id):
@@ -346,12 +372,15 @@ def shop_page():
         selected_item = get_item_by_id(selected_item_id)
 
         if (
-            selected_item is not None and
-            is_item_unlocked(selected_item, total_points)
+            selected_item is not None
+            and not selected_item.get("is_future_item", False)
+            and is_item_unlocked(selected_item, total_points)
         ):
             session["selected_item"] = selected_item_id
 
-    selected_item = session.get("selected_item", "none")
+        return redirect(url_for("shop_page"))
+
+    selected_item = get_active_avatar_item(total_points)
 
     return render_template(
         "shop.html",
